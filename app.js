@@ -2,6 +2,7 @@
 
 const main = document.querySelector('#main');
 const ticketBase = 'https://webticket.meitetsu.co.jp/webticket-user/Product/Detail/';
+const towerGuide = 'https://www.nagoya-tv-tower.co.jp/';
 const fareGuide = 'https://www.meitetsu.co.jp/plan/campaign/detail/1283199_8034.html';
 const schoolGuide = 'https://www.meitetsu.co.jp/train/ticket_fare/ticket/teikiwebyoyaku/index.html';
 const cityBusGuide = 'https://ebook.steccorp.co.jp/book/ranranbusguidebook_R8/index.html';
@@ -13,13 +14,13 @@ const scenes = {
   commute: {name:'通勤・通学のきっぷ', location:'名鉄一宮・名鉄名古屋・東海市', photo:'commute', intro:'これから同じ場所に何度か通います。きっぷをまとめて買う方がいい？', question:'どんな予定で通いますか？', description:'区間・回数・通う人から、きっぷや定期券を選びます。'}
 };
 const places = {
-  castle: {photo:'castle', tab:'お城に入る', short:'犬山城と城下町', place:'犬山', title:'犬山城に入って、城下町へ。', user:'名鉄名古屋から往復して、お城の中にも入りたい。', reason:'お城の見学と城下町の散策を楽しむなら犬山へ。名鉄名古屋からの往復と犬山城の入場券引換がひとつになります。', ticket:'犬山城下町きっぷ（CentX版）', price:1840,id:'S20260200004', condition:'中学生以下の設定はありません。1人1端末で利用します。', detail:'設定は2027年2月28日まで。除外日があります。往復の対象区間・入場券の引換方法は商品詳細で確認できます。'},
+  castle: {photo:'castle', tab:'お城に入る', short:'犬山城と城下町', place:'犬山', title:'犬山城に入って、城下町へ。', user:'名鉄名古屋から往復して、お城の中にも入りたい。', reason:'城下町を散策して犬山城へ。名鉄名古屋駅から犬山へ往復し、お城にも入るなら、名鉄の乗車券と犬山城の入場券引換がひとつになったきっぷを使えます。', ticket:'犬山城下町きっぷ（CentX版）', price:1840,id:'S20260200004', condition:'中学生以下の設定はありません。1人1端末で利用します。', detail:'設定は2027年2月28日まで。除外日があります。往復の対象区間・入場券の引換方法は商品詳細で確認できます。'},
   city: {photo:'city',tab:'街を見渡す',short:'栄のタワーへ',place:'名古屋・栄',title:'栄で、街並みを展望台から。',user:'市内で過ごしたい。バスで巡って、展望台に上りたい。',reason:'市内をなごやSRTで巡り、中部電力 MIRAI TOWERの通常展望を楽しむプランです。',ticket:'なごやSRT＋展望チケット',price:1700,id:'S20260300025', condition:'大人の料金例。SRTは原則として金・土・日・月・祝日に運行します。',detail:'SRT 1DAYパスと通常展望のセットです。対象日・除外日は商品詳細で確認してください。中学生には専用の商品があります。'},
   park: {photo:'park',tab:'公園で過ごす',short:'長久手の公園',place:'長久手',title:'リニモを降りて、公園を散歩。',user:'外でのんびりしたい。公園まで電車で往復したい。',reason:'藤が丘でリニモに乗り換え、愛・地球博記念公園へ。公園を散策して同じ経路で戻る予定に合います。',ticket:'リニモ往復券',price:800,id:'S20260800001',condition:'藤が丘駅―愛・地球博記念公園駅間の往復運賃です。',detail:'名古屋から藤が丘までの運賃と、有料施設への入場は含まれません。'},
   walk: {photo:'city',tab:'栄で街歩き',short:'栄で地上を散策',place:'名古屋・栄',title:'今日は、栄を歩いてみましょう。',user:'栄で街歩きだけ。展望台には上らないです。',reason:'久屋大通公園からタワー周辺までは、地上を歩いて楽しめます。すでに栄にいて徒歩で過ごすなら、この散策に乗車券や展望券を買う必要はありません。'}
 };
 const transport = {
-  sakae:{tab:'栄からバスで',short:'乗り換えを避けたい',user:'栄のホテルです。荷物が多いので乗り換えたくないです。',from:'伏見・栄の停留所',to:'中部国際空港',photo:'bus',mode:'名鉄空港バスの車両例',title:'栄から、乗り換えずに空港へ。',reason:'栄の停留所から空港に向かうバスがあります。ホテルに近い乗り場と出発時刻を確認しましょう。',ticket:'伏見・栄―中部国際空港 片道券',price:2000,id:'T20261000003',condition:'予約はできず、満席時は乗れません。チケットは乗車後、降車までに購入します。',guide:airportBusGuide,guideText:'公式の乗り場・時刻を見る'},
+  sakae:{tab:'栄からバスで',short:'乗り換えを避けたい',user:'栄のホテルです。荷物が多いので乗り換えたくないです。',from:'伏見・栄の停留所',to:'中部国際空港',photo:'bus',mode:'名鉄空港バスの車両例',title:'乗り換えを避けたいなら、空港バスで。',reason:'荷物を持って乗り換えるのが大変なら、伏見・栄の停留所から空港まで乗り換えずに行けるバスが候補です。お近くの乗り場と出発時刻を確認しましょう。',ticket:'伏見・栄―中部国際空港 片道券',price:2000,id:'T20261000003',condition:'予約はできず、満席時は乗れません。チケットは乗車後、降車までに購入します。',guide:airportBusGuide,guideText:'公式の乗り場・時刻を見る'},
   nagoya:{tab:'名古屋駅から',short:'名鉄電車に乗る',user:'名古屋駅にいます。電車で空港へ行きたいです。',from:'名鉄名古屋駅',to:'中部国際空港駅',photo:'rail',mode:'名鉄電車',title:'名鉄名古屋から、鉄道で空港へ。',reason:'名鉄名古屋駅から中部国際空港駅まで使える片道QRきっぷがあります。列車の時刻を公式案内で確認できます。',ticket:'名鉄名古屋―中部国際空港 片道QRきっぷ',price:980,id:'S20260300019',condition:'特別車を選ぶときは別途、特別車両券が必要です。指定の対応改札で利用します。',guide:airportRailGuide,guideText:'名鉄の空港アクセスを見る'},
   kanayama:{tab:'金山駅から',short:'名鉄電車に乗る',user:'出発は金山駅です。電車で行きます。',from:'金山駅',to:'中部国際空港駅',photo:'rail',mode:'名鉄電車',title:'金山からの片道券があります。',reason:'金山駅から中部国際空港駅まで乗るなら、この区間のQRきっぷを使えます。',ticket:'金山―中部国際空港 片道QRきっぷ',price:910,id:'S20260300018',condition:'特別車には別途、特別車両券が必要です。金山駅は中央・西口の対応改札が対象です。',guide:airportRailGuide,guideText:'名鉄の空港アクセスを見る'}
 };
@@ -36,7 +37,7 @@ const visitStarted = Date.now();
 let nextMessage = 0;
 function sessionState(){
   const state=history.state || {};
-  return {carry:state.carry || '',said:messages.get(state.turn) || ''};
+  return {carry:state.carry || '',opening:state.opening,said:messages.get(state.turn) || ''};
 }
 function tile(route,label,detail,image){
   return nav(route,`${image ? photo(image) : ''}<span class="tile-text"><b>${label}</b><small>${detail}</small></span><span class="tile-arrow" aria-hidden="true">›</span>`, `tile${image ? '' : ' noimg'}`);
@@ -52,16 +53,32 @@ function home(){
   return `<div class="home"><div class="home-intro"><div>${pin('名古屋・沿線エリア')}<h1>どんな予定ですか？</h1></div><p>相談を選んで、行き先やきっぷを見つけましょう。</p></div><div class="home-grid">${content.map(([key,title,subtitle],i)=>{const scene=scenes[key];return nav(key,`${photo(scene.photo)}<div class="home-text">${pin(scene.name)}<h2>${title}</h2><p>${subtitle}</p><span class="home-open" aria-hidden="true">↗</span></div>`,`home-card${i===0 ? ' big' : ''}`);}).join('')}</div><p class="home-note">相談に合わせて画面が変わる提案用デモです。購入はリンク先の公式サービスで行います。</p></div>`;
 }
 function firstOuting(){
-  return sessionState().carry ? '帰りの空港への行き方は分かった。今日の午後はどこに行こう？' : scenes.outing.intro;
+  const state=sessionState();
+  return messages.get(state.opening) || (state.carry ? '帰りは分かった。今日、半日ならどこへ？' : scenes.outing.intro);
+}
+function outingTarget(id){return id==='city'?'outing/sakae-plan':'outing/'+id;}
+function sakaePlan(initial){
+  const selected=[
+    ['outing/city','SRTで巡って展望台へ','市内を移動して通常展望を楽しむ'],
+    ['outing/tower','展望台だけに行く','SRTは利用しない'],
+    ['outing/walk','栄で地上を街歩き','公園やタワーの周辺を歩く']
+  ];
+  const choices=selected.map(([route,label,detail])=>tile(route,label,detail)).join('');
+  return `${trail(initial,scenes.outing.question,'近場がいい。栄で街を見下ろしてみたい。')}${ask('栄では、どんな過ごし方にしますか？','展望台に入るか、市内をなごやSRTで巡るかで、合うきっぷが変わります。',`<div class="choices">${choices}</div>`)}${input('例　展望台だけに行く')}`;
+}
+function towerOnly(initial){
+  return `${trail(initial,'栄では、どんな過ごし方にしますか？','展望台だけに行きます。SRTは使いません。')}${chips(['栄','展望台のみ','SRTの利用なし'])}<section class="response simple-result"><h2>栄のタワーで、展望を楽しむ。</h2><p>中部電力 MIRAI TOWERの通常展望を楽しむなら、施設の公式サイトで営業時間と入場方法を確認できます。</p><div class="buttons">${sourceLink(towerGuide,'MIRAI TOWERの公式案内を見る')}</div></section>${optionGroup('別の過ごし方を選ぶ',[nav('outing/sakae-plan','栄での過ごし方'),nav('outing','ほかの行き先')])}${input('例　栄で街歩きだけ')}`;
 }
 function outingView(key){
   const initial=firstOuting();const scene=scenes.outing;const journeyContext=sessionState().carry;
-  const context=journeyContext ? `<p class="carry">${escapeHtml(journeyContext)}の相談に続いて</p>` : '';
+  const context=journeyContext ? `<p class="carry">${escapeHtml(journeyContext)}</p>` : '';
+  if(key==='sakae-plan')return context+sakaePlan(initial);
+  if(key==='tower')return context+towerOnly(initial);
   if(!Object.hasOwn(places,key)){
-    return `${context}${quote(initial)}${ask(scene.question,'名古屋から大人ひとりで半日出かける例です。気分に近いものを選んでください。',`<div class="choices">${Object.entries(places).map(([id,p])=>tile('outing/'+id,p.tab,p.short,p.photo)).join('')}</div>`)}${input('例　公園でのんびりしたい')}`;
+    return `${context}${quote(initial)}${ask(scene.question,'名古屋から大人ひとりで半日出かける例です。気分に近いものを選んでください。',`<div class="choices">${Object.entries(places).map(([id,p])=>tile(outingTarget(id),p.tab,p.short,p.photo)).join('')}</div>`)}${input('例　公園でのんびりしたい')}`;
   }
-  const selected=places[key];const rest=Object.entries(places).filter(([id])=>id!==key).map(([id,p])=>nav('outing/'+id,p.tab));
-  return `${context}${trail(initial,scene.question,selected.user)}${chips(['名古屋から','半日','大人1人',selected.tab])}<div class="response">${imageCard(selected,selected.id ? product(selected) : '')}</div>${optionGroup('過ごし方を変えてみる',rest)}${input('例　やっぱりお城に入りたい')}`;
+  const selected=places[key];const rest=Object.entries(places).filter(([id])=>id!==key).map(([id,p])=>nav(outingTarget(id),p.tab));
+  return `${context}${trail(initial,key==='city'?'栄では、どんな過ごし方にしますか？':scene.question,selected.user)}${chips(['名古屋から','半日','大人1人',selected.tab])}<div class="response">${imageCard(selected,selected.id ? product(selected) : '')}</div>${optionGroup('過ごし方を変えてみる',rest)}${input('例　やっぱりお城に入りたい')}`;
 }
 function airportView(key,modifier){
   const scene=scenes.airport;
@@ -73,7 +90,7 @@ function airportView(key,modifier){
   const railDetails=seat ? '<p class="explain">座席を指定する場合は、乗車券に加えて特別車両券（ミューチケット）を用意します。対象列車・空席は公式サービスでご確認ください。</p>' : '';
   const alternatives=Object.entries(transport).filter(([id])=>id!==key).map(([id,p])=>nav('airport/'+id,p.tab));
   if(key!=='sakae'&&!seat) alternatives.unshift(nav('airport/'+key+'/seat','座席を指定したい'));
-  const onward=nav('outing','<span><small>続けて、おでかけを相談</small><b>帰りは分かった。今日の午後は？</b></span><span aria-hidden="true">→</span>','next-scenario','data-handoff="airport"');
+  const onward=nav('outing','<span><small>続けて、おでかけを相談</small><b>帰りは分かった。今日、半日ならどこへ？</b></span><span aria-hidden="true">→</span>','next-scenario','data-handoff="airport"');
   return `${trail(scene.intro,scene.question,seat?'電車の座席は指定できますか？':selected.user)}${chips([selected.from, key==='sakae'?'荷物が多い':'鉄道で移動',seat?'座席指定を希望':''])}<div class="response">${imageCard(selected,`${routeMap}${railDetails}${product(selected,sourceLink(selected.guide,selected.guideText))}`)}</div>${onward}${optionGroup('条件を変えてみる',alternatives)}${input('例　金山駅から乗りたい')}`;
 }
 function journeySelector(){return `<div class="choices">${tile('commute/work','ときどき研修へ','名鉄一宮―名鉄名古屋','commute')}${tile('commute/school','学校へ通いたい','鉄道や地域のバス','city')}</div>`;}
@@ -81,11 +98,12 @@ function workView(number){
   const initial='名鉄一宮から名鉄名古屋まで、研修で何度か往復します。';
   const question='約60日間で、何回往復しますか？';
   if(!/^[1-5]$/.test(number || ''))return `${quote(sessionState().said || initial)}${ask(question,'名鉄一宮から名鉄名古屋まで、定期券を持っていない大人1人が通う例です。この区間と条件に合う場合は回数を選んでください。',`<div class="options">${[1,2,3,4,5].map(n=>nav('commute/work/'+n,n+'往復')).join('')}</div>`)}${nav('commute','通う予定を選び直す','reset')}${input('例　研修は3往復です')}`;
+  const tentative=normalizeUtterance(sessionState().said)==='もう1日通うかも';
   const count=Number(number);const normal=count*2*400;const bundle=2800;const buySet=bundle<normal;
   const winner=buySet?`10枚セットの方が${yen(normal-bundle)}安くなります。`:`毎回払えば${yen(bundle-normal)}安くなります。`;
   const next=buySet?`片道${count*2}回分を利用します。${count===5?'10枚を使い切る予定です。':`残る${10-count*2}枚は有効期間内に同じ対象区間で使えます。`}`:'予定の回数なら、普通運賃での乗車を案内します。';
   const buy=buySet ? sourceLink(ticketBase+'S20260300015','CentXで10枚セットを見る',true) : sourceLink(fareGuide,'名鉄の運賃比較を見る',true);
-  return `${trail(initial,question,`${count}往復する予定です。`)}${chips(['名鉄一宮―名鉄名古屋','大人1人','定期券なし','約60日以内'])}<section class="fare-module" aria-labelledby="compare"><h2 id="compare" class="ask">通う回数で比べてみましょう。</h2><div class="num-select"><div><b>往復する回数</b><p>1〜5往復の例</p></div><div class="stepper"><button ${count===1?'disabled':''} data-count="${count-1}" aria-label="往復回数を1減らす">−</button><strong>${count}往復</strong><button ${count===5?'disabled':''} data-count="${count+1}" aria-label="往復回数を1増やす">＋</button></div></div><div class="fare-row"><div class="fare-item ${buySet?'':'winner'}"><span>毎回、普通運賃で乗る</span><b>${yen(normal)}</b><span>${count*2}回 × 400円</span></div><div class="fare-item ${buySet?'winner':''}"><span>10枚セットを買う</span><b>2,800円</b><span>片道QRきっぷ10枚</span></div></div><p class="fare-answer"><strong>${winner}</strong><br>${next}</p></section><div class="buttons">${buy}</div><p class="notes">「名古屋・金山 特別きっぷ（名鉄一宮駅発）」との比較です。金山着や学生の定期運賃とは金額が異なります。</p>${optionGroup('ほかの通い方を相談する',[nav('commute/school','学校へ通いたい')])}${input('例　予定が変わって4往復です')}`;
+  return `${trail(initial,question,`${count}往復する予定です。`)}${chips(['名鉄一宮―名鉄名古屋','大人1人','定期券なし','約60日以内'])}<section class="fare-module" aria-labelledby="compare"><h2 id="compare" class="ask">${tentative?'もう1日往復する場合を比べます。':'通う回数で比べてみましょう。'}</h2><div class="num-select"><div><b>往復する回数</b><p>1〜5往復の例</p></div><div class="stepper"><button ${count===1?'disabled':''} data-count="${count-1}" aria-label="往復回数を1減らす">−</button><strong>${count}往復</strong><button ${count===5?'disabled':''} data-count="${count+1}" aria-label="往復回数を1増やす">＋</button></div></div><div class="fare-row"><div class="fare-item ${buySet?'':'winner'}"><span>毎回、普通運賃で乗る</span><b>${yen(normal)}</b><span>${count*2}回 × 400円</span></div><div class="fare-item ${buySet?'winner':''}"><span>10枚セットを買う</span><b>2,800円</b><span>片道QRきっぷ10枚</span></div></div><p class="fare-answer"><strong>${winner}</strong><br>${next}</p></section><div class="buttons">${buy}</div><p class="notes">「名古屋・金山 特別きっぷ（名鉄一宮駅発）」との比較です。金山着や学生の定期運賃とは金額が異なります。</p>${optionGroup('ほかの通い方を相談する',[nav('commute/school','学校へ通いたい')])}${input('例　予定が変わって4往復です')}`;
 }
 const schoolOptions=[['bus','らんらんバス','高校へ通う'],['child','らんらんバス','小学生が通う'],['train','名鉄電車','高校へ通う']];
 function schoolView(key){
@@ -121,7 +139,7 @@ function clarification(scene){
   const guidance={
     outing:'このデモで試せるのは、大人1人が名古屋から半日出かける次の例です。ご希望と合うものがあれば選んでください。',
     airport:'このデモでは、市内からセントレアに向かう次の3通りを試せます。ご希望の出発地と交通手段を選んでください。',
-    commute:'このデモでは、次の通い方を試せます。お持ちのきっぷや利用区間も確認して、ご希望に合う例を選んでください。'
+    commute:'研修は名鉄一宮から名鉄名古屋へ1〜5往復する例です。利用区間や定期券の有無を確かめ、ご希望に合う通い方を選んでください。'
   };
   const examples={outing:'例　お城に入りたい',airport:'例　金山駅から乗りたい',commute:'例　一宮から研修で3往復します'};
   const choices=options[scene].map(([route,label,detail])=>tile(route,label,detail)).join('');
@@ -139,15 +157,23 @@ function render(moveFocus=false){
     const meta=scenes[scene];
     const inside=key==='confirm'?clarification(scene):scene==='outing'?outingView(key):scene==='airport'?airportView(key,detail):commuteView(key,detail);
     document.title=`${meta.name}｜移動・おでかけ相談 体験デモ`;
-    main.innerHTML=`<div class="scene-wrap">${nav('','<span aria-hidden="true">←</span> 相談一覧','back')}<div class="journey"><aside class="scene-aside">${photo(scene==='outing'&&key==='castle'?'city':meta.photo)}<div class="aside-copy">${pin(meta.location)}<h1>${meta.name}</h1><p>${meta.description}</p></div></aside><section class="session" aria-label="相談体験"><div class="session-top"><span class="mode"><i class="spark" aria-hidden="true">✦</i>名鉄エリアのAIモード</span><span class="session-scope">体験デモ</span></div><div class="inside">${inside}</div></section></div></div>`;
+    const sakaePhoto=scene==='outing'&&['sakae-plan','tower'].includes(key);
+    const asidePhoto=scene==='outing'&&(key==='castle'||sakaePhoto)?'city':meta.photo;
+    const asidePlace=sakaePhoto?'名古屋・栄':meta.location;
+    main.innerHTML=`<div class="scene-wrap">${nav('','<span aria-hidden="true">←</span> 相談一覧','back')}<div class="journey"><aside class="scene-aside">${photo(asidePhoto,sakaePhoto?'中部電力 MIRAI TOWERとオアシス21':'')}<div class="aside-copy">${pin(asidePlace)}<h1>${meta.name}</h1><p>${meta.description}</p></div></aside><section class="session" aria-label="相談体験"><div class="session-top"><span class="mode"><i class="spark" aria-hidden="true">✦</i>名鉄エリアのAIモード</span><span class="session-scope">体験デモ</span></div><div class="inside">${inside}</div></section></div></div>`;
   }
   if(moveFocus){main.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
 }
 function navigate(route,{said='',handoff=false,keepPosition=false}={}){
   const before=parsePath();const prior=sessionState();const target=route.split('/')[0];
-  const carry=handoff&&before.scene==='airport'?'空港への行き方':target==='outing'&&before.scene==='outing'?(prior.carry||''):'';
+  const airportJourney={sakae:'伏見・栄発の空港バス',nagoya:'名鉄名古屋から電車',kanayama:'金山から電車'};
+  const carry=handoff&&before.scene==='airport'&&airportJourney[before.key]?'明日の空港アクセス（'+airportJourney[before.key]+'）を相談済み':target==='outing'&&before.scene==='outing'?prior.carry:'';
   const state={carry};
   if(said){state.turn=visitStarted+'-'+(++nextMessage);messages.set(state.turn,said.slice(0,90));}
+  if(target==='outing'){
+    if(route==='outing'&&state.turn)state.opening=state.turn;
+    else if(before.scene==='outing'&&prior.opening)state.opening=prior.opening;
+  }
   if(location.hash.slice(1)===route)history.replaceState(state,'',route?'#'+route:location.pathname+location.search);
   else history.pushState(state,'',route?'#'+route:location.pathname+location.search);
   render(!keepPosition);
@@ -158,11 +184,14 @@ function normalizeUtterance(value){
   return value.normalize('NFKC').trim().replace(/[\s。.,、!?！？「」]/g,'');
 }
 const acceptedPhrases = {
-  'outing/castle':[places.castle.tab,places.castle.user,'お城に入りたい','お城に入りたいです','やっぱりお城に入りたい','犬山城に入りたい','犬山城に入りたいです','犬山城と城下町'],
-  'outing/city':[places.city.tab,places.city.user,'展望台に上りたい','栄の展望台に上りたい','栄のタワーへ','SRTと展望台'],
+  'outing':['半日でどこかに行きたい。まだ行き先は決めてない','名古屋から半日'],
+  'outing/castle':['城下町を歩いて、犬山城にも入りたい',places.castle.tab,places.castle.user,'お城に入りたい','お城に入りたいです','やっぱりお城に入りたい','犬山城に入りたい','犬山城に入りたいです','犬山城と城下町'],
+  'outing/sakae-plan':['近場がいい。栄で街を見下ろしてみたい',places.city.tab,'展望台に上りたい','栄の展望台に上りたい','栄のタワーへ','栄での過ごし方'],
+  'outing/city':[places.city.user,'SRTと展望台','SRTで巡って展望台へ','市内をSRTで巡って展望台へ','市内をSRTで巡って展望台'],
+  'outing/tower':['展望台だけ','展望台だけに行く','展望台だけに行きます。SRTは使いません。','展望台だけに行きたい'],
   'outing/park':[places.park.tab,places.park.user,'公園でのんびり','公園でのんびりしたい','公園でのんびりしたいです','公園まで電車で往復','長久手の公園に行きたい'],
-  'outing/walk':[places.walk.tab,places.walk.user,'栄で街歩きだけ','栄で街歩きだけです','栄を徒歩で散策','栄で徒歩だけ','栄で地上を散策'],
-  'airport/sakae':[transport.sakae.tab,transport.sakae.user,'栄のホテル','栄のホテルから','栄のホテルから荷物が多いです','栄から空港までバスに乗りたい','栄のホテルから空港へバスで行きたい','伏見からバスで空港に行きたい'],
+  'outing/walk':['栄で地上を街歩き',places.walk.tab,places.walk.user,'栄で街歩きだけ','栄で街歩きだけです','栄を徒歩で散策','栄で徒歩だけ','栄で地上を散策'],
+  'airport/sakae':['栄からセントレアへ。荷物が多いんです',transport.sakae.tab,transport.sakae.user,'栄のホテル','栄のホテルから','栄のホテルから荷物が多いです','栄から空港までバスに乗りたい','栄のホテルから空港へバスで行きたい','伏見からバスで空港に行きたい'],
   'airport/nagoya':[transport.nagoya.tab,transport.nagoya.user,'名古屋駅','名鉄名古屋駅','名古屋駅から乗りたい','名古屋駅から電車で','名鉄名古屋から電車で空港へ','名古屋駅から空港に行きたい'],
   'airport/kanayama':[transport.kanayama.tab,transport.kanayama.user,'金山駅','金山駅から乗りたい','金山から電車で','金山から電車で空港へ','金山から空港まで電車に乗りたい'],
   'commute/work':['ときどき研修へ','研修で通う','研修です','一宮から研修に通います','名鉄一宮から名鉄名古屋へ研修で通います'],
@@ -176,19 +205,25 @@ const knownRoutes = new Map(
 );
 function classify(value){
   const text=normalizeUtterance(value);
-  const {scene,key}=parsePath();
+  const {scene,key,detail}=parsePath();
   const route=knownRoutes.get(text);
   if(route && route.split('/')[0]===scene)return route;
 
   if(scene==='airport'&&Object.hasOwn(transport,key)){
-    if(['帰りは分かった今日の午後は','帰りは分かった今日の午後はどこに行こう','今日の午後はどこに行こう','今日の午後はどこへ'].includes(text))return 'outing';
+    if(['帰りは分かった今日半日ならどこへ','帰りは分かった今日の午後は','帰りは分かった今日の午後はどこに行こう','今日の午後はどこに行こう','今日の午後はどこへ'].includes(text))return 'outing';
     if(key!=='sakae'&&['座席を指定したい','座席指定','指定席にしたい','電車の座席は指定できますか'].includes(text))return 'airport/'+key+'/seat';
     if(key==='sakae'&&['荷物が多い','乗り換えたくない'].includes(text))return 'airport/sakae';
   }
   if(scene==='commute'){
+    if(text==='もう1日通うかも'){
+      if(key==='work'&&/^[1-4]$/.test(detail))return 'commute/work/'+(Number(detail)+1);
+      return null;
+    }
+    const fullRoute=/^大人1人で名鉄一宮[―−–—-]名鉄名古屋を研修で([1-5])往復$/.exec(text);
+    if(fullRoute)return 'commute/work/'+fullRoute[1];
     const countFrom=/^(?:名鉄)?一宮(?:駅)?から(?:(?:名鉄)?名古屋(?:駅)?(?:まで|へ))?(?:研修(?:で|は|に))?([1-5])往復(?:です|します|する予定です|の予定です)?$/.exec(text);
     if(countFrom)return 'commute/work/'+countFrom[1];
-    const countOnly=/^(?:研修(?:で|は|に)|予定が変わって|やっぱり|今回は|あもう1日増えて)?([1-5])往復(?:です|します|する予定です|の予定です)?$/.exec(text);
+    const countOnly=/^(?:研修(?:で|は|に)|予定が変わって|やっぱり|今回は|あもう1日増えて)?([1-5])往復(?:です|します|する予定です|の予定です|になった)?$/.exec(text);
     if(countOnly)return key==='work'?'commute/work/'+countOnly[1]:'commute/work';
   }
   return null;
