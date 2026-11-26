@@ -59,7 +59,7 @@ function firstOuting(){
 function outingTarget(id){return id==='city'?'outing/sakae-plan':'outing/'+id;}
 function sakaePlan(initial){
   const selected=[
-    ['outing/city','SRTで巡って展望台へ','市内を移動して通常展望を楽しむ'],
+    ['outing/city','SRTと展望台','市内を巡って通常展望を楽しむ'],
     ['outing/tower','展望台だけに行く','SRTは利用しない'],
     ['outing/walk','栄で地上を街歩き','公園やタワーの周辺を歩く']
   ];
@@ -67,7 +67,7 @@ function sakaePlan(initial){
   return `${trail(initial,scenes.outing.question,'近場がいい。栄で街を見下ろしてみたい。')}${ask('栄では、どんな過ごし方にしますか？','展望台に入るか、市内をなごやSRTで巡るかで、合うきっぷが変わります。',`<div class="choices">${choices}</div>`)}${input('例　展望台だけに行く')}`;
 }
 function towerOnly(initial){
-  return `${trail(initial,'栄では、どんな過ごし方にしますか？','展望台だけに行きます。SRTは使いません。')}${chips(['栄','展望台のみ','SRTの利用なし'])}<section class="response simple-result"><h2>栄のタワーで、展望を楽しむ。</h2><p>中部電力 MIRAI TOWERの通常展望を楽しむなら、施設の公式サイトで営業時間と入場方法を確認できます。</p><div class="buttons">${sourceLink(towerGuide,'MIRAI TOWERの公式案内を見る')}</div></section>${optionGroup('別の過ごし方を選ぶ',[nav('outing/sakae-plan','栄での過ごし方'),nav('outing','ほかの行き先')])}${input('例　栄で街歩きだけ')}`;
+  return `${trail(initial,'栄では、どんな過ごし方にしますか？','展望台だけに行きます。SRTは使いません。')}${chips(['栄','展望台のみ','SRTの利用なし'])}<section class="response simple-result"><h2>栄のタワーで街を一望。</h2><p>中部電力 MIRAI TOWERの通常展望を楽しむなら、施設の公式サイトで営業時間と入場方法を確認できます。</p><div class="buttons">${sourceLink(towerGuide,'MIRAI TOWERの公式案内を見る')}</div></section>${optionGroup('別の過ごし方を選ぶ',[nav('outing/sakae-plan','栄での過ごし方'),nav('outing','ほかの行き先')])}${input('例　栄で街歩きだけ')}`;
 }
 function outingView(key){
   const initial=firstOuting();const scene=scenes.outing;const journeyContext=sessionState().carry;
@@ -167,7 +167,7 @@ function render(moveFocus=false){
 function navigate(route,{said='',handoff=false,keepPosition=false}={}){
   const before=parsePath();const prior=sessionState();const target=route.split('/')[0];
   const airportJourney={sakae:'伏見・栄発の空港バス',nagoya:'名鉄名古屋から電車',kanayama:'金山から電車'};
-  const carry=handoff&&before.scene==='airport'&&airportJourney[before.key]?'明日の空港アクセス（'+airportJourney[before.key]+'）を相談済み':target==='outing'&&before.scene==='outing'?prior.carry:'';
+  const carry=handoff&&before.scene==='airport'&&airportJourney[before.key]?'相談済み　明日の空港へ（'+airportJourney[before.key]+'）':target==='outing'&&before.scene==='outing'?prior.carry:'';
   const state={carry};
   if(said){state.turn=visitStarted+'-'+(++nextMessage);messages.set(state.turn,said.slice(0,90));}
   if(target==='outing'){
