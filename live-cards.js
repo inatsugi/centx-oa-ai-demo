@@ -87,7 +87,7 @@ function inuyamaDayView(context,isExample){
   const pieces=restricted?['天守を外して、','城下町で過ごす午後。']:order[0]==='tea'?['本町通りでお茶して、','城下町を巡る午後。']:plan.admission==='no'||(!order.includes('castle')&&order.includes('town'))?['城下町を歩いて、',teaLast?'帰りは本町通りでお茶。':'犬山で過ごす午後。']:
     firstCastle?['犬山城を先に、',teaLast?'帰りは本町通りでお茶。':tea?'城下町でお茶と昼食。':'城下町を歩く午後。']:['城下町でお昼、','午後は犬山城へ。'];
   const ticketFirst=canShowTicket&&context.ticketFirst;
-  const ticketView=canShowTicket?ticket({...places.castle,condition:'名鉄名古屋発の大人1人。往復乗車券と犬山城の入場券引換を含みます。中学生以下の設定はなく、1人1端末で利用します。'}):'';
+  const ticketView=canShowTicket?ticket({...places.castle,condition:'名鉄名古屋発の大人1人。往復乗車券と犬山城の入場券引換を含みます。中学生以下の設定はありません。1回の購入は1枚までです。'}):'';
   const heading=(ticketFirst?['往復と入城は、','犬山城下町きっぷで。']:pieces).map(t=>`<span class="phrase">${t}</span>`).join('');
   const stops={
     lunch:{name:'城下町で昼食',body:'香味茶寮 壽俵屋 犬山井上邸',url:castleLunch,link:'お店の案内'},
