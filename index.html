@@ -2,21 +2,46 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#faf9f5">
-  <meta name="description" content="名古屋での休日、セントレアへの移動、通勤・通学のきっぷ。3つの相談から選べる、OA AIモードの提案用体験デモです。">
-  <title>名鉄エリアの移動・おでかけ相談｜OA AIモード 体験デモ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#faf9f4">
+  <meta name="description" content="名古屋から半日のおでかけ、セントレアへの移動、研修や通学のきっぷをLINEで相談する体験デモ。">
+  <title>名鉄沿線のおでかけ相談｜LINE公式アカウント AIモード 体験デモ</title>
   <link rel="stylesheet" href="styles.css">
-  <script defer src="app.js"></script>
+  <link rel="stylesheet" href="voice.css">
+  <script src="conversation.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="voice.js" defer></script>
 </head>
 <body>
   <a href="#main" class="skip">本文へ</a>
-  <header class="global-head"><div class="head-inner">
-    <a class="brand" href="#" data-route="" aria-label="移動・おでかけ相談 トップ"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="brand-name">名鉄エリアのおでかけ相談<small>LINE公式アカウント AIモード</small></span></a>
-    <button class="about-trigger" type="button" id="about-trigger">提案デモ <span aria-hidden="true">ⓘ</span></button>
-  </div></header>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <a class="brand" data-route="" href="#" aria-label="名鉄沿線のおでかけ相談 トップ">
+        <span class="brand-emblem" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="7.5" y="5.5" width="17" height="18.5" rx="5"/><path d="M8 11h16M8 16.5h16M16 11v5.5M11 24l-3.5 4m13.5-4 3.5 4M10 26h12"/><circle fill="currentColor" stroke="none" cx="11.5" cy="20" r="1.25"/><circle fill="currentColor" stroke="none" cx="20.5" cy="20" r="1.25"/>
+          </svg>
+        </span>
+        <span class="brand-copy"><b>名鉄沿線のおでかけ相談</b><small>LINE公式アカウント <i aria-hidden="true"></i> AIモード</small></span>
+      </a>
+      <button id="about-trigger" class="about-trigger" type="button" aria-label="提案デモについて"><span class="info-symbol" aria-hidden="true">i</span>デモについて</button>
+    </div>
+  </header>
   <main id="main" tabindex="-1"></main>
-  <footer class="footer"><span>名鉄エリアの OA AIモード 提案デモ</span><a href="credits.html">写真のクレジット</a></footer>
-  <dialog id="about"><form method="dialog"><button aria-label="閉じる" class="dialog-close">×</button></form><h2>このデモについて</h2><p>名鉄エリアの移動とおでかけを題材にした、LINE公式アカウント AIモードの提案用デモです。</p><p>選択肢や短い入力に応じて、あらかじめ用意した会話と案内が切り替わります。生成AIや運行情報とは接続していません。入力内容はこの画面内だけで使用します。</p><p>運賃・商品の情報は2026年11月26日時点の例です。購入、対象日、運行状況はリンク先の公式サイトでご確認ください。</p></dialog>
+  <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
+  <dialog id="about">
+    <form method="dialog"><button class="dialog-close" aria-label="閉じる">×</button></form>
+    <h2>このデモについて</h2>
+    <p>名鉄沿線の移動とおでかけを題材にした、LINE公式アカウント AIモードの提案用デモです。</p>
+    <p>相談の言葉やそれまでの条件に応じて、行き先、乗り方、きっぷの案内が変わります。用意したデータを使い、入力した言葉に応じて案内を組み立てます。生成AIやリアルタイムの運行情報には接続していません。音声入力を選んだ場合は、ご利用のブラウザの音声認識サービスが音声を処理することがあります。</p>
+    <p>運賃・商品は2026年11月26日時点の例です。購入、対象日、運行状況は、各案内のリンク先でご確認ください。</p>
+    <p><a href="https://www.lycorp.co.jp/ja/story/20260421/aiagent.html" target="_blank" rel="noopener noreferrer">LINEヤフーのOA AIモード紹介 ↗</a></p>
+    <a href="credits.html">写真のクレジット</a>
+  </dialog>
+  <dialog id="conversation-tools" class="tool-dialog" aria-labelledby="tool-heading">
+    <form method="dialog"><button class="dialog-close" aria-label="閉じる">×</button></form>
+    <div id="tool-content"></div>
+  </dialog>
   <noscript>この体験デモを利用するには、ブラウザのJavaScriptを有効にしてください。</noscript>
-</body></html>
+</body>
+</html>
