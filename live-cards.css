@@ -1,0 +1,167 @@
+/* The itinerary, boarding checklist and fare comparison are updated in the conversation. */
+.case-line {
+  display:flex;align-items:center;gap:6px;margin:0 0 5px;
+  color:#4e6b55;font-size:12px;font-weight:650;letter-spacing:.025em
+}
+.day-sheet {
+  display:grid;grid-template-columns:minmax(235px,.82fr) minmax(0,1.25fr);
+  overflow:hidden;background:#f6f4eb;border:1px solid #d4d3be;border-radius:8px
+}
+.day-sheet figure,.mode-option figure {position:relative;margin:0;overflow:hidden}
+.day-sheet figure {min-height:188px}
+.day-sheet figure img {width:100%;height:100%;position:absolute;inset:0;object-fit:cover}
+.editable-day>.reason,.seat-options>.reason,.boarding-kit>.reason,.working-fares>.reason {margin:4px 0 13px}
+.day-stops {padding:15px 21px}
+.sheet-caption {display:flex;align-items:center;justify-content:space-between;gap:9px}
+.sheet-caption>b,.prep-total>span {font-size:13px;font-weight:650}
+.sheet-caption>small {color:var(--muted);font-size:11px}
+.day-stops ol,.prep-items ul {padding:0;margin:0;list-style:none}
+.day-stops ol {margin-top:6px}
+.day-stops li {display:grid;grid-template-columns:43px 12px minmax(0,1fr);align-items:start;gap:8px;min-height:52px;padding:6px 0 4px;position:relative}
+.visit-time {font:650 15px/1.5 "Helvetica Neue",Arial,sans-serif;color:#915a33;font-variant-numeric:tabular-nums;letter-spacing:-.012em}
+.day-stops li>i {display:block;position:relative;z-index:1;width:8px;height:8px;background:#f9f5e9;border:2px solid #b1774e;border-radius:50%;margin:6px 0 0}
+.day-stops li:not(:last-child)::before {content:"";position:absolute;top:17px;bottom:-13px;left:54px;border-left:1px solid #bc9c77}
+.day-stops h3 {margin:0;font-size:16px;font-weight:650;line-height:1.5}
+.day-stops li p {font-size:12px;line-height:1.6;color:var(--muted)}
+.day-stops .text-link {font-size:11px;margin-left:4px}
+.day-stops .text-link svg {width:12px;height:12px}
+.day-notes,.kit-bottom,.fare-foot {
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 14px;margin-top:11px
+}
+.day-notes>span,.fare-foot>small {font-size:11px;line-height:1.6;color:var(--muted)}
+.day-notes .text-link,.fare-foot .text-link {font-size:12px}
+.mode-comparison {display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mode-option {border:1px solid #ccd7d2;border-radius:7px;overflow:hidden;background:#f5f7f4;display:grid;grid-template-columns: minmax(94px,.5fr) minmax(0,1fr)}
+.mode-option.reserved {background:#eef4f3;border-color:#a7bfc0}
+.mode-option figure {min-height:183px}
+.mode-option figure img {width:100%;height:100%;position:absolute;inset:0;object-fit:cover}
+.mode-option>div {padding:12px 13px}
+.mode-type {display:flex;gap:5px;align-items:center;font-size:10px;font-weight:650;color:#4b6e69}
+.mode-option h2 {font-size:17px;line-height:1.45;margin:4px 0 7px}
+.mode-option .money {font-size:29px}
+.mode-option p {font-size:12px;line-height:1.55;color:var(--muted);margin:6px 0}
+.mode-option .text-link {font-size:11px}
+.prep-ticket {display:grid;grid-template-columns:minmax(145px,.35fr) 1.35fr;border:1px solid #bdcdbe;border-radius:7px;overflow:hidden;background:#f6f8f1}
+.prep-total {background:#e4eedf;border-right:1.5px dashed #b4c5ad;display:flex;align-items:flex-start;justify-content:center;flex-direction:column;gap:9px;padding:18px 22px}
+.prep-total .money {font-size:37px}
+.prep-items {padding:13px 18px}
+.prep-items ul>li {border-top:1px solid #d1dacb;margin-top:6px;padding:8px 0 1px}
+.prep-items label {display:flex;align-items:center;gap:8px;position:relative;cursor:pointer;font-size:15px;font-weight:650}
+.prep-items label>strong {margin-left:auto;white-space:nowrap}
+.prep-items label>span>small {display:block;font-size:10px;font-weight:400;line-height:1.4;color:var(--muted)}
+.prep-items input {position:absolute;left:0;opacity:0;cursor:pointer;width:22px;height:22px}
+.check-shape {display:grid;place-items:center;width:20px;height:20px;flex:none;border:1.5px solid #78937c;border-radius:4px;background:var(--white);color:transparent}
+.prep-items input:checked+.check-shape {background:#4f7655;color:white;border-color:#4f7655}
+.prep-items input:focus-visible+.check-shape {outline:3px solid #327e88;outline-offset:3px}
+.prep-items li>p {font-size:12px;color:var(--muted);margin:5px 0}
+.prep-items .cta,.prep-items .text-link {font-size:12px}
+.kit-bottom .onward {margin:0;font-size:13px}
+.working-fares>.fare-row {margin-top:10px}
+.working-fares .fare-item+.fare-item {border-left:1px solid #c9d2c3}
+.working-fares>.fare-foot {padding-top:9px;border-top:1px solid #d8dfd3;margin-top:12px}
+.comparison-table {border:1px solid #c1cdbb;border-radius:6px;overflow:hidden;margin:11px 0 0}
+.comparison-table table {border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.comparison-table th,.comparison-table td {padding:9px 13px;text-align:right;border-bottom:1px solid #d3ddce;line-height:1.45}
+.comparison-table th:first-child,.comparison-table td:first-child {text-align:left}
+.comparison-table thead {background:#edf1e6;color:var(--muted)}
+.comparison-table thead th {font-size:12px;font-weight:650}
+.comparison-table tbody tr {background:var(--white)}
+.comparison-table .fare-item {border:0;padding:0}
+.comparison-table .fare-item.winner {background:#e8f0e1}
+.comparison-table tr td:last-child {font-size:17px;font-weight:700}
+.comparison-table tbody tr:last-child>* {border-bottom:0}
+.ticket-ribbon {display:flex;align-items:center;justify-content:space-between;gap:8px 20px;background:#f3f1e7;border-radius:5px;padding:9px 12px;margin-top:8px}
+.ticket-ribbon>div:first-child {display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 9px}
+.ticket-ribbon b {font-size:13px}
+.ticket-ribbon small {font-size:11px;color:var(--muted)}
+.punch-strip {display:grid;grid-template-columns:repeat(10,1fr);gap:4px;width:min(230px,42%);flex:none}
+.punch-strip i {height:17px;border:1px solid #7e9b7a;border-radius:2px;position:relative}
+.punch-strip .consumed {background:#65835d;border-color:#65835d}
+.punch-strip .unused {background:var(--white)}
+.punch-strip .expired {border-color:#b59371;background:repeating-linear-gradient(125deg,#b894743a 0 2px,transparent 2px 5px)}
+.replies:has(button:only-of-type) button {min-height:32px}
+@media (max-width:850px) and (min-width:641px) {
+  .mode-option {grid-template-columns:1fr}
+  .mode-option figure {min-height:95px}
+  .mode-option figure img {object-position:center 43%}
+}
+@media(max-width:640px){
+  .case-line {font-size:10px;gap:4px;margin-bottom:4px}
+  .case-line svg {width:13px;height:13px}
+  .editable-day>.reason,.seat-options>.reason,.boarding-kit>.reason,.working-fares>.reason {margin:4px 0 10px}
+  .day-sheet {display:block}
+  .day-sheet figure {height:104px;min-height:0}
+  .day-sheet figure img {object-position:center 46%}
+  .day-stops {padding:9px 12px}
+  .sheet-caption>b,.prep-total>span {font-size:12px}
+  .sheet-caption>small {font-size:10px}
+  .day-stops ol {margin-top:4px}
+  .day-stops li {grid-template-columns:36px 9px 1fr;gap:5px;min-height:46px;padding:5px 0 3px}
+  .day-stops li:not(:last-child)::before {left:44px;top:14px;bottom:-11px}
+  .day-stops li>i {width:7px;height:7px;margin-top:5px}
+  .visit-time {font-size:12px}
+  .day-stops h3 {font-size:14px}
+  .day-stops li p {font-size:11px}
+  .day-stops .text-link {font-size:10px}
+  .day-notes,.fare-foot,.kit-bottom {gap:4px 13px;margin-top:8px}
+  .day-notes>span,.fare-foot>small {font-size:10px}
+  .mode-comparison {gap:7px}
+  .mode-option {display:block}
+  .mode-option figure {height:74px;min-height:0}
+  .mode-option>div {padding:9px}
+  .mode-option figcaption {font-size:8px;left:3px;bottom:3px}
+  .mode-type {font-size:9px;gap:3px}
+  .mode-type svg {width:13px;height:13px}
+  .mode-option h2 {font-size:14px;line-height:1.45;margin:4px 0}
+  .mode-option p,.mode-option .text-link {font-size:11px}
+  .mode-option .money {font-size:24px}
+  .prep-ticket {display:block}
+  .prep-total {border-right:0;border-bottom:1px dashed #b4c5ad;flex-direction:row;align-items:center;justify-content:space-between;padding:9px 13px}
+  .prep-total .money {font-size:29px}
+  .prep-items {padding:9px 12px}
+  .prep-items label {font-size:13px}
+  .prep-items li>p {font-size:11px}
+  .prep-items label>span>small {font-size:9px}
+  .prep-items .cta,.prep-items .text-link {font-size:11px}
+  .kit-bottom .onward,.kit-bottom .text-link {font-size:11px}
+  .working-fares .fare-top {display:block}
+  .working-fares .stepper {margin:4px 0 2px}
+  .working-fares .fare-label {min-height:18px}
+  .working-fares .fare-item {padding:9px 10px}
+  .comparison-table th,.comparison-table td {padding:7px 6px;font-size:12px}
+  .comparison-table thead th {font-size:10px}
+  .comparison-table tr td:last-child {font-size:14px}
+  .working-fares .comparison-table .fare-item {padding:0}
+  .expiry-table th,.expiry-table td {padding:6px 4px;white-space:nowrap}
+  .ticket-ribbon {padding:7px 9px;gap:5px 10px}
+  .ticket-ribbon b {font-size:11px}
+  .ticket-ribbon small {font-size:10px}
+  .punch-strip {gap:2px;width:36%}
+  .punch-strip i {height:14px}
+  .replies {align-items:center}
+  .replies button {text-align:left;line-height:1.4;max-width:calc(100% - 49px)}
+  .replies:has(button:only-of-type) button {min-height:30px}
+  .replies:has(button:only-of-type)>span {white-space:nowrap}
+}
+@media(max-width:359px){
+  .comparison-table th,.comparison-table td {font-size:11px;padding:6px 4px}
+  .comparison-table tr td:last-child {font-size:12px}
+  .expiry-table th,.expiry-table td {padding:6px 3px}
+  .day-stops {padding:8px}
+}
+
+.ticket-focus>.ticket {margin:9px 0 16px}
+.ticket-focus>.day-sheet {background:#f5f5ef}
+@media(max-width:640px){
+  .day-sheet img[src*="castle-town"] {object-position:center 67%}
+  .ticket-focus>.ticket {margin:7px 0 12px}
+  .ticket-focus .day-sheet figure {height:80px}
+}
+
+.school-booking>.reason {margin:5px 0 12px}
+.school-booking ol {padding:0;list-style:none;counter-reset:school;margin:8px 0 13px;border-top:1px solid var(--line)}
+.school-booking li {display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);counter-increment:school}
+.school-booking li::before {content:counter(school);flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#e4ede0;color:#466548;font-size:12px;font-weight:650}
+.school-booking li b {font-size:15px}
+.school-booking li p {color:var(--muted);font-size:13px}
+@media(max-width:640px){.school-booking li{padding:7px 0;gap:7px}.school-booking li b{font-size:13px}.school-booking li p{font-size:12px}}

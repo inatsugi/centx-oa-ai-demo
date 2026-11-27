@@ -28,7 +28,7 @@ const yen = value => `${value.toLocaleString('ja-JP')}円`;
 
 const escapeHtml = value => String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const parts = route => route.split('/');
-const routeNow = () => location.hash.slice(1);
+const routeNow = () => location.hash.slice(1).split('?')[0];
 const sceneNow = () => parts(routeNow())[0] || 'home';
 function parsePath() {
   const [scene = '',key = '',detail = ''] = parts(routeNow());
@@ -62,15 +62,15 @@ const chips = entries => `<div class="context" aria-label="現在の条件">${en
 const money = n => `<strong class="money">${n.toLocaleString('ja-JP')}<small>円</small></strong>`;
 const homePrompts = {
   outing:'名古屋から半日、どこに行こう？',
-  airport:'セントレアまでどう行けばいい？',
-  commute:'何度か通うなら、どのきっぷがいい？'
+  airport:'栄のホテルからセントレアへ行きたい',
+  commute:'一宮から名古屋へ、研修で4往復したい'
 };
-const initials={outing:'半日でどこかに行きたい。まだ行き先は決めてない',airport:scenes.airport.intro,commute:scenes.commute.intro};
+const initials={outing:'半日でどこかに行きたい。まだ行き先は決めてない',airport:homePrompts.airport,commute:homePrompts.commute};
 const fallbackExample={home:'名古屋から半日出かけたい',outing:'やっぱり近場で過ごしたい',airport:'やっぱり金山から電車で',commute:'一宮から研修で3往復します'};
 const titles={outing:'休日のおでかけ',airport:'空港への行き方',commute:'通うときのきっぷ',home:'相談内容の確認'};
 const travelMemory = new Map();
 let serial = 0;
-const currentRecord=()=>travelMemory.get(history.state?.consultation) || {turns:[],context:{},carry:''};
+const currentRecord=()=>travelMemory.get(history.state?.consultation) || {turns:[],context:restoreCardContext(routeNow()),carry:''};
 const schoolOptions=[['bus','らんらんバスで高校へ','東海市の全線定期'],['child','らんらんバスで小学校へ','小学生以下の運賃'],['train','名鉄電車で高校へ','新規の通学定期']];
 const destinationWords={castle:'犬山城に入りたい',city:'SRTで巡って展望台へ',park:'公園でのんびりしたい',walk:'栄を徒歩で散策したい','sakae-plan':'栄で街を見下ろしたい',tower:'展望台だけに行きたい'};
 const decisionFor=route=>{
@@ -133,6 +133,7 @@ function companyView(c){
 
 
 function outingView(key){
+  if(!key || key==='inuyama-plan')return inuyamaDayView(currentRecord().context,!key);
   if(key==='with-company')return companyView(currentRecord().context.company || {});
   if(key==='sakae-plan'){
     return question('栄では、どう過ごしますか？','展望台に入るか、なごやSRTにも乗るかで、きっぷが変わります。',`<div class="sakae-layout"><figure>${photo('city')}<figcaption>中部電力 MIRAI TOWER</figcaption></figure>${chooseRows([['outing/city','SRTと展望台を楽しむ','市内を巡って通常展望へ'],['outing/tower','展望台だけに行く','SRTは利用しない'],['outing/walk','栄を歩いて回る','タワー周辺を地上から楽しむ']])}</div>`);
@@ -148,6 +149,10 @@ function outingView(key){
 
 const arrivalLabels={sakae:'伏見・栄からバス',nagoya:'名鉄名古屋から電車',kanayama:'金山から電車'};
 function airportView(key,modifier){
+  if(key==='seat-options')return airportSeatOptions();
+  if(modifier==='ready'&&['nagoya','kanayama'].includes(key))return airportReadyView(key,currentRecord().context);
+  const isExample=!key;
+  if(isExample)key='sakae';
   if(!Object.hasOwn(transport,key)){
     return question('どこから空港へ向かいますか？','出発地に合う電車やバス、乗車前に確かめたいことをご案内します。',`<div class="airport-choices">${chooseRows([['airport/sakae','伏見・栄のホテルから','荷物を持って、乗り換えずに','bus'],['airport/nagoya','名古屋駅から','名鉄電車で空港へ','train'],['airport/kanayama','金山駅から','名鉄電車で空港へ','train']])}<figure>${photo('airport')}<figcaption>中部国際空港（セントレア）</figcaption></figure></div>`);
   }
@@ -158,22 +163,16 @@ function airportView(key,modifier){
   const onward=plan?.combined
     ?nav(plan.outing || 'outing',`今日の午後の相談へ ${icon('arrow',18)}`,'onward','data-handoff="airport"')
     :nav('outing',`<span>帰りは分かった。<b>今日、半日ならどこへ？</b></span>${icon('arrow',19)}`,'onward','data-handoff="airport"');
-  return `<article class="rec airport-result"><h1>${bus?'栄から空港へ、バスで直通。':(key==='nagoya'?'名鉄名古屋':'金山')+'から、電車で空港へ。'}</h1><p class="reason">${bus?'荷物が多いときも、乗り換えずにセントレアまで行けます。':seat?'座席を指定する場合は、乗車券に加えて特別車両券（ミューチケット）を用意します。':'中部国際空港駅まで、この区間の片道QRきっぷが使えます。'}</p><div class="route-board"><div class="route-mode">${icon(bus?'bus':'train',18)}${bus?'名鉄空港バス':'名鉄電車'}</div><div class="route-content"><div class="route-stations"><div class="station"><span>出発</span><b>${p.from}</b></div><i class="route-line"></i><div class="station"><span>到着</span><b>${p.to}</b></div></div><div class="route-price"><span>大人・片道</span>${money(p.price)}</div></div></div><div class="boarding"><div><h2>乗る前に</h2><p>${p.condition}${seat?' 対象列車・空席は公式案内で確認できます。':''}</p></div><div class="flight-links">${external(p.guide,p.guideText)}${external(ticketBase+p.id,'CentXで片道券を見る',true)}</div></div></article>${alternatives('出発地・座席を変える',alternativesFrom)}${onward}`;
+  return `<article class="rec airport-result">${isExample?'<div class="case-line">栄・伏見から出発する場合</div>':''}<h1>${bus?'栄から空港へ、バスで直通。':(key==='nagoya'?'名鉄名古屋':'金山')+'から、電車で空港へ。'}</h1><p class="reason">${bus?'荷物が多いときも、乗り換えずにセントレアまで行けます。':seat?'座席を指定する場合は、乗車券に加えて特別車両券（ミューチケット）を用意します。':'中部国際空港駅まで、この区間の片道QRきっぷが使えます。'}</p><div class="route-board"><div class="route-mode">${icon(bus?'bus':'train',18)}${bus?'名鉄空港バス':'名鉄電車'}</div><div class="route-content"><div class="route-stations"><div class="station"><span>出発</span><b>${p.from}</b></div><i class="route-line"></i><div class="station"><span>到着</span><b>${p.to}</b></div></div><div class="route-price"><span>大人・片道</span>${money(p.price)}</div></div></div><div class="boarding"><div><h2>乗る前に</h2><p>${p.condition}${seat?' 対象列車・空席は公式案内で確認できます。':''}</p></div><div class="flight-links">${external(p.guide,p.guideText)}${external(ticketBase+p.id,'CentXで片道券を見る',true)}</div></div></article>${alternatives('出発地・座席を変える',alternativesFrom)}${onward}`;
 }
 function workView(detail){
   const valid=/^[1-5]$/.test(detail);
   if(!valid)return question('研修には、何回往復しますか？','名鉄一宮から名鉄名古屋まで、約60日間に通う例です。',`<div class="work-setup">${chips(['大人1人','定期券なし'])}<div class="setup-stations">名鉄一宮 <span aria-hidden="true">⇄</span> 名鉄名古屋</div><div class="count-options">${[1,2,3,4,5].map(n=>nav('commute/work/'+n,`<b>${n}</b>往復`,'count-option')).join('')}</div></div>`);
-  const n=Number(detail),normal=n*2*400,bundle=2800,buySet=bundle<normal,difference=Math.abs(bundle-normal),record=currentRecord();
-  const tentative=record.turns.at(-1)?.said?.includes('かも');
-  const recommendation=buySet?'10枚セット':'普通運賃で';
-  const normalText=`${n*2}回 × 400円`;
-  const setText=buySet?(n===5?'10枚を使い切る':'10枚のうち'+(n*2)+'枚を使用'):'片道QRきっぷ10枚';
-  function fareItem(name,value,formula,isWinner){
-    return `<div class="fare-item ${isWinner?'winner':''}"><div class="fare-label"><b>${name}</b>${isWinner?`<span class="recommended">${icon('check',12)}おすすめ</span>`:''}</div>${money(value)}<div class="fare-track"><i style="--extent:${value/4000*100}%"></i></div><small>${formula}</small></div>`;
-  }
-  return `<section class="fare-module"><div class="fare-top"><div>${chips(['名鉄一宮 ⇄ 名鉄名古屋','約60日以内','大人1人','定期券なし'])}<h1 id="compare"><span class="phrase">${n}往復${tentative?'に増える場合は、':'なら、'}</span><span class="phrase">${recommendation}。</span></h1></div><div class="stepper"><span>往復回数</span><div><button type="button" data-count="${n-1}" aria-label="往復回数を1減らす" ${n===1?'disabled':''}>−</button><strong>${n}<small>往復</small></strong><button type="button" data-count="${n+1}" aria-label="往復回数を1増やす" ${n===5?'disabled':''}>＋</button></div></div></div><div class="fare-row">${fareItem('普通運賃で乗る',normal,normalText,!buySet)}${fareItem('10枚セットを買う',bundle,setText,buySet)}</div><div class="fare-conclusion"><b>${buySet?'10枚セット':'普通運賃'}の方が ${yen(difference)} 安くなります。</b><p>${buySet?(n===5?'10枚すべてを使う予定です。':'残る'+(10-2*n)+'枚は有効期間内に同じ対象区間で使えます。'):'いまの予定なら、乗るたびに払う方がお得です。'}</p>${external(buySet?ticketBase+'S20260300015':fareGuide,buySet?'CentXで10枚セットを見る':'名鉄の運賃比較を見る',true)}</div><details class="travel-details"><summary>比較したきっぷと条件</summary><p>「名古屋・金山 特別きっぷ（名鉄一宮駅発）」との比較です。金山着や学生の定期運賃とは金額が異なります。</p></details></section>${alternatives('通う目的を変える',[nav('commute/school','学校へ通いたい')])}`;
+  return fareWorkbench(Number(detail),currentRecord().context);
 }
 function schoolView(key){
+  const step=currentRecord().context.schoolStep;
+  if(key==='train'&&['prepare','collect'].includes(step))return schoolBookingView(step);
   const condition=schoolOptions.find(([k])=>k===key);
   if(!condition)return question('通学に使うのは、どの路線ですか？','通う人の学齢に合わせて、ご案内します。',chooseRows(schoolOptions.map(([id,label,detail])=>['commute/school/'+id,label,detail,id==='train'?'train':'bus'])));
   const train=key==='train',child=key==='child';
@@ -183,6 +182,7 @@ function schoolView(key){
   return `<article class="school-result">${chips([train?'名鉄電車':'東海市・らんらんバス',child?'小学生':'高校生'])}<h1>${title}</h1><p class="reason">${reason}</p>${!train&&!child?`<div class="school-fare"><span>1か月定期</span>${money(2000)}</div>`:''}${link}</article>${alternatives('通い方を変える',[...schoolOptions.filter(([id])=>id!==key).map(([id,label])=>nav('commute/school/'+id,label)),nav('commute/work','研修で通う')])}`;
 }
 function commuteView(key,detail){
+  if(!key)return fareWorkbench(4,currentRecord().context,true);
   if(key==='work')return workView(detail);
   if(key==='school')return schoolView(detail);
   return question('どんな予定で通いますか？','研修は通う回数から、通学は使う路線と学齢から、買い方を選べます。',chooseRows([['commute/work','ときどき研修へ','名鉄一宮 ⇄ 名鉄名古屋／定期券を持たない大人1人','commute'],['commute/school','学校へ通いたい','東海市のらんらんバス・名鉄電車','train']]));
@@ -225,6 +225,9 @@ function clarification(scene){
 
 function defaultLine(route){
   const [scene,key,detail]=parts(route);
+  if(key==='inuyama-plan')return '犬山で過ごす午後の順番を考えたい';
+  if(key==='seat-options')return seatComparison;
+  if(detail==='ready')return '空港へ行く前に必要なものを確認したい';
   if(key==='confirm')return '';
   if(!key)return initials[scene] || '';
   if(scene==='outing')return key==='tower'?'展望台だけに行きます。SRTは使いません。':places[key]?.user || destinationWords[key];
@@ -234,6 +237,10 @@ function defaultLine(route){
 function summaryFor(route){
   const [scene,key,detail]=parts(route);
   if(key==='confirm')return '希望に近い条件を確認します。';
+  if(!key)return {outing:'犬山の城下町で昼食をとり、午後は犬山城へ向かう半日案です。',airport:'栄・伏見からはセントレアまで直通の空港バスで移動できます。',commute:'名鉄一宮から名鉄名古屋へ4往復する例は、10枚セットが400円安くなります。'}[scene]||'相談内容を確認します。';
+  if(key==='inuyama-plan')return '希望に合わせて、犬山を訪れる行程を組みました。';
+  if(key==='seat-options')return '空港バスは先着順。名鉄名古屋からの特別車なら事前に列車と座席を指定できます。';
+  if(detail==='ready')return '空港駅まで乗るためのきっぷを、出発前のリストで確認できます。';
   if(scene==='airport')return transport[key]?(arrivalLabels[key]+'で空港へ。大人片道'+yen(transport[key].price)+'です。'):scenes.airport.question;
   if(scene==='outing')return places[key]?.title || (key==='tower'?'展望台だけのご案内です。':key==='sakae-plan'?'栄での過ごし方を選べます。':scenes.outing.question);
   if(scene==='commute' && key==='work')return detail?(Number(detail)<=3?'普通運賃':'10枚セット')+'の方がお得です。':'約60日間で何回往復しますか？';
@@ -251,6 +258,7 @@ function planAfter(prior,from,to,handoff){
   if(!['outing','airport'].includes(scene))return null;
   if(!from || !['outing','airport'].includes(oldScene))return {airport:scene==='airport'&&transport[key]?key:'',outing:'',combined:false};
   const plan={airport:oldScene==='airport'&&transport[oldKey]?oldKey:'',outing:'',combined:false,...prior};
+  if(handoff && !plan.airport && ['','seat-options'].includes(oldKey) && oldScene==='airport')plan.airport='sakae';
   if(handoff && plan.airport)plan.combined=true;
   if(scene==='airport'&&Object.hasOwn(transport,key))plan.airport=key;
   if(scene==='outing'&&(Object.hasOwn(places,key)||key==='tower'))plan.outing=to;
@@ -262,6 +270,8 @@ function itinerary(plan){
   return `<section class="itinerary" aria-label="相談中の旅程"><b>${icon('fork',16)}相談中の旅程</b><div>${nav('outing',`<small>今日の午後</small><strong>${when}</strong>${icon('chevron',13)}`,'plan-stop','data-plan-edit="outing"')}${nav('airport',`<small>明日の空港</small><strong>${arrivalLabels[plan.airport]}${plan.checkSchedule?'・時刻確認':''}</strong>${icon('chevron',13)}`,'plan-stop carry','data-plan-edit="airport"')}</div></section>`;
 }
 function quickSuggestions(route){
+  const nextReply=cardQuickReply(route,currentRecord().context);
+  if(nextReply)return [nextReply];
   const [scene,key,detail]=parts(route);
   if(key==='confirm')return [];
   if(scene==='outing'&&!key)return ['もし雨だったら？'];
@@ -297,6 +307,7 @@ function render(moveFocus=false){
     if(moveFocus){main.focus({preventScroll:true});window.scrollTo(0,0);}
     return;
   }
+  const oldCards=captureCardLayout();
   if(!main.querySelector('.workbench'))renderShell();
   const record=currentRecord(),latest=visibleTurns().at(-1)||{},answer=document.querySelector('#answer');
   document.title=`${titles[scene]}｜名鉄沿線のおでかけ相談`;
@@ -327,6 +338,7 @@ function render(moveFocus=false){
   document.querySelector('#input-status').hidden=true;
   document.querySelector('.history-control').hidden=!latest.said;
   if(moveFocus){title?.focus({preventScroll:true});document.querySelector('#stream').scrollTop=0;window.scrollTo(0,0);}
+  animateCardEdit(oldCards);
   const live=document.querySelector('#live-status');live.textContent=latest.change?latest.change+'。'+(title?.textContent || ''):(title?.textContent || '');
 }
 function knownChange(before,after){
@@ -389,6 +401,16 @@ function navigate(route,{said='',handoff=false,resolution=null,planEdit=false}={
     next.plan.outingName='栄（過ごし方を確認中）';
   }
   if(next.plan && scene==='outing' && key!=='confirm')delete next.plan.pendingContext;
+  if(scene==='outing'&&key==='inuyama-plan'&&next.context.inuyamaPlan?.ticket){
+    next.context.ticketFirst=/きっぷ|切符|乗車券|料金|運賃/.test(value);
+  }
+  if(next.plan && scene==='outing' && key==='inuyama-plan'){
+    if(!resolution && next.plan.inuyamaContext)Object.assign(next.context,next.plan.inuyamaContext);
+    next.plan.outing=route;
+    next.plan.inuyamaContext={...next.context};
+    next.plan.outingName='犬山の半日プラン';
+  }
+  if(next.plan && scene==='airport' && key==='seat-options' && !next.plan.airport)next.plan.airport='sakae';
   if(next.plan && scene==='outing' && key==='with-company'){
     next.plan.outing=route;
     const company=next.context.company || next.plan.company;
@@ -399,9 +421,15 @@ function navigate(route,{said='',handoff=false,resolution=null,planEdit=false}={
   if(next.plan && scene==='outing' && key==='tower')next.plan.outingName='栄で展望台へ';
   if(!resolution && scene==='outing' && ['sakae-plan','tower','city'].includes(key))next.context.towerRequested=true;
   if(scene==='commute'&&key==='work'&&/^[1-5]$/.test(detail))next.context.count=Number(detail);
+  if(detail==='ready' && ['nagoya','kanayama'].includes(key)){
+    const previous=prior.context;
+    if(previous.lastOrigin===key && previous.prepChecked){
+      next.context.prepChecked={fare:previous.prepChecked.fare,seat:previous.seatClass===next.context.seatClass&&previous.prepChecked.seat};
+    }
+  }
   const id=Date.now().toString(36)+'-'+(++serial);
   travelMemory.set(id,next);
-  history.pushState({consultation:id},'','#'+route);
+  history.pushState({consultation:id},'','#'+cardAddress(route,next.context));
   render(true);
   animateChange(before,route);
 }
@@ -457,7 +485,7 @@ function classify(value){
 
 function submitWords(value){
   const record=currentRecord(),route=routeNow();
-  const resolved=window.CentxConversation?.resolve({text:value,route,context:{...record.context}});
+  const resolved=window.CentxConversation?.resolve({text:value,route,context:{...exampleContext(route),...record.context}});
   const target=resolved?.route || classify(value) || (!route?knownRoutes.get(normalizeUtterance(value)):null) || (sceneNow()+'/confirm');
   const handoff=sceneNow()==='airport'&&parts(target)[0]==='outing';
   navigate(target,{said:value,handoff,resolution:resolved});
@@ -479,7 +507,7 @@ function showTool(type){
     const turns=visibleTurns(),rows=items=>items.map(t=>`<div class="history-turn"><div><small>あなた</small><p>${escapeHtml(t.said)}</p></div><div><small>おでかけ相談</small><p>${escapeHtml(t.reply)}</p></div></div>`).join('');
     const past=turns.length>3?`<details class="past-turns"><summary>以前の会話（${turns.length-3}件）</summary>${rows(turns.slice(0,-3))}</details>`:'';
     content.innerHTML=`<h2 id="tool-heading">相談の履歴</h2><div class="history-list">${past}${rows(turns.slice(-3))}</div>`;
-  }else if(scene==='outing' && currentRecord().context.company && ['with-company','confirm'].includes(parsePath().key)){
+  }else if(scene==='outing' && currentRecord().context.company && ['with-company','inuyama-plan','confirm'].includes(parsePath().key)){
     const ideas=['犬山に変更','やっぱり栄に変更','長久手の公園に行きたい','雨でも楽しめるところは？','昼ごはんも食べたい'];
     content.innerHTML=`<h2 id="tool-heading">相談の条件を変える</h2><div class="company-switch">${ideas.map(idea=>`<button class="small-choice" type="button" data-say="${idea}">${idea}</button>`).join('')}</div>`;
   }else{
@@ -495,6 +523,9 @@ for(const dialog of [about,toolsDialog])dialog.addEventListener('click',event=>{
   if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();
 });
 document.addEventListener('submit',handleInput);
+document.addEventListener('change',event=>{
+  if(event.target.matches('input[data-prep]'))storePrepCheck(event.target);
+});
 document.addEventListener('click',event=>{
   if(event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button!==0)return;
   if(event.target.closest('.skip')){event.preventDefault();main.focus();return;}
@@ -507,7 +538,9 @@ document.addEventListener('click',event=>{
     const count=Number(counter.dataset.count);
     if(count>=1&&count<=5){
       const label=counter.getAttribute('aria-label');
-      navigate('commute/work/'+count,{said:count+'往復で比べたい'});
+      const previous=currentRecord().context.fare,oldCount=Number(parsePath().detail)||4;
+      const outside=Math.min(previous?.afterPeriod || 0,count),fare=fareBreakdown(count,outside,oldCount,outside?'expiry':'delta');
+      navigate('commute/work/'+count,{said:count+'往復で比べたい',resolution:{context:{fare},change:oldCount+'往復 → '+count+'往復',reply:outside?'期限後の'+outside+'往復を残して、合計を計算し直しました。':count+'往復の場合の支払額と残枚数を計算しました。'}});
       const buttons=[...document.querySelectorAll('.stepper button:not(:disabled)')];
       (buttons.find(el=>el.getAttribute('aria-label')===label) || buttons[0])?.focus({preventScroll:true});
     }

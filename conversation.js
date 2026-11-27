@@ -9,7 +9,8 @@ window.CentxConversation = (() => {
     'airport/kanayama':'金山から電車', 'airport/nagoya':'名鉄名古屋から電車',
     commute:'通う予定', 'commute/work':'研修の往復回数', 'commute/school':'通学の条件',
     'commute/school/train':'名鉄電車で高校へ', 'commute/school/bus':'らんらんバスで高校へ',
-    'commute/school/child':'小学生のらんらんバス'
+    'commute/school/child':'小学生のらんらんバス', 'outing/inuyama-plan':'犬山の半日プラン', 'airport/seat-options':'座席と乗り換えの比較',
+    'airport/nagoya/ready':'名鉄名古屋での乗車準備', 'airport/kanayama/ready':'金山での乗車準備'
   };
   function label(route) {
     const [, key, detail] = route.split('/');
@@ -39,7 +40,8 @@ window.CentxConversation = (() => {
       const rest = text.slice(match.index + match[0].length);
       const end = rest.search(topic);
       const clause = rest.slice(0, end >= 0 ? Math.min(20, end) : 20);
-      status = negative.test(clause) ? -1 : 1;
+      const skipping = /食べ(?:な|ず|ません)|飲(?:ま(?:な|ず)|みません)|休憩(?:しな|せず|しません)|とら(?:な|ず)|寄りません|取り消|キャンセル/.test(clause);
+      status = negative.test(clause) || skipping ? -1 : 1;
     }
     return status;
   }
@@ -93,7 +95,7 @@ window.CentxConversation = (() => {
       if (!left) continue;
       if (allowed.test(left)) continue;
       // The preceding inflection can be temporal or causal ("荷物が多いから").
-      if (new RegExp('(?:' + nonLocation.source + ')$').test(left)) continue;
+      if (new RegExp('(?:' + nonLocation.source + ')$').test(left) || /(?:して|見て|入って|登って|食べて|取って|歩いて|降りて|乗って|飲んで|寄って|済ませて|終わって|選んで|泊まって|休んで|着いて|出て)$/.test(left)) continue;
       if (/[ぁ-んァ-ヶ一-龯a-z0-9]$/.test(left)) return true;
     }
     return false;
@@ -103,7 +105,7 @@ window.CentxConversation = (() => {
   const workOrigin = /(?:名鉄|尾張)?一宮(?:駅)?$/;
   const outingOrigin = /(?:名古屋|名駅|栄|藤が丘)(?:駅)?$/;
   const outingDestination = /(?:お城|犬山(?:城|駅)?|城下町|展望(?:台)?|タワー|tower|展望フロア|栄|市内|街中|公園(?:駅)?|長久手|藤が丘|地上|名駅|名古屋|近場|近く|どこか|お出かけ|遊び)(?:だけ|のみ|の予定|周辺)?$/;
-  const privateTransport = /(?<!電|列|汽|特別)車(?:で|に乗|を使|を利用)|自動車|レンタカー|マイカー|自転車|タクシー/;
+  const privateTransport = /(?<!電|列|汽|特別|普通|一般)車(?:で|に乗|を使|を利用)|自動車|レンタカー|マイカー|自転車|タクシー/;
   const ticketException = /割引|割り引|無料|手帳|優待|クーポン|購入済|入場券(?:は|が|を)?(?:すでに|既に|もう)?(?:ある|あり|持|購入)|(?:きっぷ|切符|乗車券|チケット)(?:は|が|を)(?:すでに|既に|もう)(?:ある|あり|持|買)|(?:きっぷ|切符|乗車券|チケット)(?:は|を)?(?:いらな|買わない|不要)/;
   function otherPark(text) {
     for (const {index} of text.matchAll(/(?:にある|の)公園/g)) {
@@ -112,6 +114,18 @@ window.CentxConversation = (() => {
     return /市内の公園|名古屋の公園/.test(text) || /[一-龯々ァ-ヶ]{2,}公園/.test(text.replace(/愛[・･]?地球博記念公園|モリコロパーク|久屋大通公園/g,''));
   }
   const mobility = /祖母|祖父|おばあ|おじい|高齢|長く(?:は)?歩け|あまり歩け|足が(?:悪|痛)|歩く(?:の|距離)(?:が|は)(?:苦手|心配|つら)|歩行|車いす|車椅子|ベビーカー|段差|階段を避け/;
+  function stairPreference(text) {
+    const withoutChair = /車(?:いす|イス|椅子)(?:は|を)?(?:使わない|使いません|不要|なし|無し)/;
+    const chair = /車(?:いす|イス|椅子)/.test(text) && !withoutChair.test(text) && !/貸出|貸し出し|借りられ(?:る|ますか)/.test(text);
+    const cannotClimb = /(?:階段|段差)[^、]{0,12}(?:(?:上|のぼ|登|昇)(?:が)?(?:れ|られ|ることができ)(?:ない|ません)|使え(?:ない|ません)|避けたい|避けます|厳しい|無理|不可|難しい|つらい|がない所|なしで|を通らず)/.test(text);
+    if (chair || cannotClimb) return 'avoid';
+    if (/(?:階段|段差)[^、]{0,10}(?:問題(?:は)?(?:ない|ありません)|大丈夫|使え(?:る|ます)|(?:上|登|のぼ)(?:が)?(?:れ|られ)(?:る|ます)|避けなくて(?:も)?(?:よい|いい))/.test(text)) return 'clear';
+    return '';
+  }
+  function soloTrip(text) {
+    return /(?:大人|私|自分)(?:1人|ひとり|一名)(?:で|だけ)|(?:今回|今日|今度|次)(?:は|からは)?(?:私だけ|ひとり|1人)(?:で|です|が|、|$)|(?:1人|ひとり)で(?:行きます|行く|出かけ|回ります|参加)/.test(text) && !/一緒|同行する|と[2-9]人/.test(text);
+  }
+  const stairsReply = '犬山城の天守にはエレベーターなどの昇降設備がありません。城下町での昼食や休憩を候補に、移動経路の段差と施設の入口を公式案内で確認しましょう。';
   const familyPlaces = {inuyama:'犬山',sakae:'栄',park:'長久手'};
   function companyTurn(text,previous,key) {
     const areaFromRoute = {castle:'inuyama',city:'sakae','sakae-plan':'sakae',tower:'sakae',walk:'sakae',park:'park'};
@@ -129,6 +143,9 @@ window.CentxConversation = (() => {
     if (childDescription(text)) company.child = true;
     if (/祖母|祖父|おばあ|おじい|高齢/.test(text)) company.elder = true;
     if (/長く(?:は)?歩け|あまり歩け|歩く距離|足が(?:悪|痛)|車いす|車椅子|ベビーカー|階段|段差|歩行/.test(text)) company.access = true;
+    const stairs = stairPreference(text);
+    if (stairs==='avoid') { company.avoidStairs=true; company.access=true; }
+    else if (stairs==='clear') { company.avoidStairs=false; company.access=company.walkMinutes!==null; }
     const age = [...text.matchAll(/(\d{1,3})(?:歳|才)/g)].find(m=>Number(m[1])<18);
     if (age) { company.child = true; company.age = Number(age[1]); }
     const grade = text.match(/小学(?:校)?(?:生|([1-6一二三四五六])年生?)/);
@@ -145,12 +162,17 @@ window.CentxConversation = (() => {
     if (/半日|午後/.test(text)) company.halfDay = true;
     const food = preference(text,/ランチ|昼ご[は飯]|お昼(?:ごはん)?|昼食|食事|食べ歩き|ごはん|ご飯|食べたい|カフェ/);
     if (food) company.meal = food > 0;
-    const rain = /雨|ぬれたくな|濡れたくな|屋内|室内/.test(text);
+    const indoor = /屋内|室内|建物の中/.test(text);
+    if (indoor) company.indoor = true;
+    const rain = /雨|ぬれたくな|濡れたくな/.test(text);
     if (rain) company.rain = !/雨(?:は|が)?(?:降らな|気にしな)|晴れ(?:だったら|なら)/.test(text);
     const place = familyPlaces[company.place] || '';
     const at = place ? place+'で' : '';
     const group = company.child && company.elder ? 'お子さま、お祖父母さまとの' : company.child ? 'お子さまとの' : company.elder ? 'ご家族との' : 'ご一緒の方との';
     const member = company.age !== null ? company.age+'歳のお子さま' : company.grade || 'お子さま';
+    if (stairs==='avoid' && company.place==='inuyama') return {company,change:'天守への階段を外す',reply:stairsReply};
+    if (indoor && company.place==='sakae' && company.avoidStairs)
+      return {company,change:'栄の屋内で休憩',reply:'栄のオアシス21の飲食店やMIRAI TOWER 3階のカフェが休憩の候補です。駅からの経路、段差、利用できる入口を各施設の公式案内で確認しましょう。'};
     if (previous && oldPlace !== company.place && place) {
       const kept = company.meal ? '昼食をとれる場所' : company.access ? '歩く区間' : '立ち寄り先';
       return {company,change:(familyPlaces[oldPlace] || '行き先未定')+' → '+place,
@@ -181,6 +203,86 @@ window.CentxConversation = (() => {
   function childDescription(text) {
     return /子ども|子供|こども|小学生|息子|娘|幼児|乳児|子連れ|親子/.test(text);
   }
+  const midday = /お昼(?:ごはん|ご飯|ごはん)?|昼(?:ごはん|ご飯|飯|食|休み)|ランチ|食事|ごはん|ご飯/;
+  const teaBreak = /お茶|カフェ|喫茶|コーヒー|休憩|ひと休み|一休み/;
+  const palace = /犬山城|お城|天守|城下町|おしろ|城(?=を|に|が|は|へ|の)/;
+  function dayPlan(text,previous,company,admissionBefore) {
+    const plan = {order:['lunch','castle'],admission:admissionBefore || 'undecided',roundTrip:false,ticket:false,...previous};
+    if (previous?.ticket && previous.roundTrip===undefined) plan.roundTrip = true;
+    let order = [...plan.order];
+    const enter = /(?:犬山城|お城|天守|中)(?:の中)?(?:を|に|にも|へ|まで)?(?:入(?:りたい|る|って|りま|ろ)|見学|登(?:って|りたい|る))|入(?:場|城)(?:したい|する|して|も)|中も見(?:る|たい)/.test(text);
+    const stayOutside = /入(?:ら(?:な|ず)|りません|りたく(?:は)?な)|入(?:場|城)(?:は|を)?(?:しない|不要|なし)|(?:城下町|外観|外から)(?:を歩く)?だけ|外(?:から|で)(?:見る|眺める)だけ/.test(text);
+    if (stayOutside) plan.admission = 'no';
+    else if (enter) plan.admission = 'yes';
+    const stairs = stairPreference(text);
+    if (stairs==='avoid' || company?.avoidStairs) plan.preventTowerStairs = true;
+    else if (soloTrip(text) || stairs==='clear') plan.preventTowerStairs = false;
+    if (plan.preventTowerStairs) plan.admission = 'no';
+    const visit = plan.admission === 'no' ? 'town' : 'castle';
+    order = order.map(step=>step==='town' || step==='castle'?visit:step);
+    const wantsLunch = preference(text,midday);
+    const wantsTea = preference(text,teaBreak);
+    if (wantsLunch < 0) order = order.filter(step=>step!=='lunch');
+    else if (wantsLunch > 0 && !order.includes('lunch')) order.unshift('lunch');
+    if (wantsTea < 0) order = order.filter(step=>step!=='tea');
+    else if (wantsTea > 0 && !order.includes('tea')) order.push('tea');
+    const activities = [[visit,palace],['lunch',midday],['tea',teaBreak]];
+    function move(step,first) {
+      if (!order.includes(step)) return;
+      order = order.filter(item=>item!==step);
+      if (first) order.unshift(step); else order.push(step);
+    }
+    for (const [step,pattern] of activities) {
+      const activity = '(?:'+pattern.source+')';
+      if (new RegExp('(?:先に|まず|最初に|初めに|先は)'+activity+'|'+activity+'(?:を|に|が)?先(?:に|で|が|、|$)').test(text)) move(step,true);
+      if (new RegExp('(?:帰(?:り|る前)に|最後に|締めに|あとで|後で)'+activity+'|'+activity+'(?:を|は)?(?:最後|帰り)(?:に|で|、|$)').test(text)) move(step,false);
+    }
+    for (const [before,first] of activities) {
+      if (!order.includes(before)) continue;
+      for (const [after,second] of activities) {
+        if (before===after || !order.includes(after) || order.indexOf(before)<order.indexOf(after)) continue;
+        const sequence = new RegExp('(?:'+first.source+')[^、]{0,8}?(?:てから|のあと|の後|の次|を済ませたら|を食べたら|を見たら)(?:に|は|で)?、?(?:'+second.source+')');
+        if (sequence.test(text)) {
+          order = order.filter(step=>step!==before);
+          order.splice(order.indexOf(after),0,before);
+        }
+      }
+    }
+    if (/(?:お昼|昼食|ランチ|食事)(?:を食べる)?(?:の)?前に(?:お城|城|天守)/.test(text)) move(visit,true);
+    if (/(?:お城|城|天守)(?:に入る|に行く)?(?:の)?前に(?:お昼|昼食|ランチ|食事)/.test(text)) move('lunch',true);
+    plan.order = order;
+    const invalidRide = privateTransport.test(text) || /徒歩(?:だけ|のみ|で犬山)|片道|帰りは別|往復しな|(?:名鉄|電車)(?:には|は|を)?(?:乗らな|使わな)/.test(text);
+    const specificReturn = /(?:名鉄名古屋(?:駅)?|名古屋駅|名駅)(?:発|から)[^、]{0,22}(?:往復|行って帰)|(?:往復|行き帰り)[^、]{0,18}(?:名鉄名古屋(?:駅)?|名古屋駅|名駅)/.test(text);
+    if (specificReturn) plan.roundTrip = true;
+    if (invalidRide) plan.roundTrip = false;
+    const ticketWords = /きっぷ|切符|チケット|セット券|乗車券/;
+    const wantsTicket = ticketWords.test(text) && preference(text,ticketWords) > 0 && !/買わない|買いません|いらな|不要|買いたくな/.test(text);
+    if (ticketWords.test(text)) plan.ticket = wantsTicket;
+    plan.ticket = !!(plan.ticket && plan.roundTrip && plan.admission==='yes' && !company && !invalidRide && !ticketException.test(text) && !hasPass(text));
+    let change = '犬山の立ち寄り順';
+    let reply = '犬山では、'+order.map(step=>({lunch:'城下町で昼食',castle:plan.admission==='yes'?'犬山城に入場':'犬山城周辺を散策',town:'城下町を散策',tea:'カフェでお茶'})[step]).join('、')+'の順で半日を過ごせます。';
+    if (ticketWords.test(text)) {
+      change = plan.ticket?'往復と入場のきっぷ':'行程と利用条件';
+      if (plan.ticket) reply = '名鉄名古屋からの往復と犬山城への入場には、犬山城下町きっぷが使えます。';
+      else if (!wantsTicket) reply = 'きっぷの案内を外し、犬山での立ち寄り順を残しました。';
+      else if (company) reply = 'ご一緒の方の年齢や人数で条件が変わるため、各施設と交通機関の案内で料金を確認しましょう。';
+      else if (plan.admission!=='yes') reply = '城下町の散策と入城では必要な券が変わります。犬山城の中にも入るご予定ですか。';
+      else reply = '名鉄名古屋から犬山まで往復するご予定ですか。乗車区間と入城の両方が合うきっぷを確認できます。';
+    }
+    if (plan.preventTowerStairs && (stairs==='avoid' || enter || ticketWords.test(text))) {
+      change = '城下町と移動経路を確認';
+      reply = stairsReply;
+    } else if (/エレベーター|昇降(?:設備|機)/.test(text)) {
+      change = '天守の昇降設備を確認';
+      reply = '犬山城の天守にはエレベーターなどの昇降設備がありません。階段を利用できるか、犬山城の公式案内で構造や利用条件をご確認ください。';
+    }
+    return {plan,change,reply};
+  }
+  function fareCase(count,previousCount,afterPeriod,stage) {
+    const inPeriod = count-afterPeriod;
+    return {stage,previousCount,count,inPeriod,afterPeriod,ordinaryTotal:count*800,bundleTotal:2800+afterPeriod*800,remainingTickets:10-2*inPeriod};
+  }
+  const formatYen = amount=>amount.toLocaleString('ja-JP')+'円';
 
   function resolve({text:raw = '',route = '',context = {}} = {}) {
     if (typeof raw !== 'string' || !raw.trim()) return null;
@@ -220,11 +322,29 @@ window.CentxConversation = (() => {
         const end = text.match(endOfAirportTalk);
         if (end) text = text.slice(end.index+end[0].length);
         if (!destinations.test(text) && !/栄|長久手/.test(text) && !groupOrChild(text) && !mobility.test(text))
-          return answer('outing',origin ? origin + 'の相談はここまでにして、今日の午後に行く場所を選びましょう。' : '今日の午後に訪れる場所を、名古屋から半日の範囲で選びましょう。');
+          return answer('outing',origin ? origin+'で空港へ向かう予定を残し、今日の午後は犬山で過ごす半日プランを一例にしました。' : '今日の午後は、名古屋から半日で訪れる犬山のプランを一例にしました。');
       }
-      const previousCompany = same && ['confirm','with-company'].includes(key) ? prior.company : null;
-      const solo = /(?:大人|私|自分)(?:1人|ひとり|一名)(?:で|だけ)|今回は(?:1人|ひとり)で/.test(text);
-      if (!solo && (previousCompany || groupOrChild(text) || mobility.test(text))) {
+      const previousCompany = same && ['confirm','with-company','inuyama-plan'].includes(key) ? prior.company : null;
+      const solo = soloTrip(text);
+      const previousPlan = same && key==='inuyama-plan' ? prior.inuyamaPlan : null;
+      const atInuyama = /犬山|お城/.test(text) || same && (['castle','inuyama-plan'].includes(key) || prior.examplePlace==='inuyama' || prior.place==='inuyama' || previousCompany?.place==='inuyama');
+      const otherArea = /栄|長久手|タワー|公園|近場|近くで|名古屋市内/.test(text);
+      const arranging = /(?:プラン|行程|予定|コース)(?:を|も|に|が|は)?(?:作|組|入|考|立て|変え|お願い)|半日(?:の)?(?:プラン|コース)|順番|帰りに|先に|まず|最初に|最後に|前に/.test(text);
+      const planUpdate = previousPlan && (midday.test(text) || teaBreak.test(text) || /入ら|入る|入って|入りたい|往復|きっぷ|切符|チケット|徒歩|車で|城下町だけ|外観だけ/.test(text));
+      const stairs = stairPreference(text);
+      const accessibilityQuestion = /エレベーター|昇降(?:設備|機)/.test(text);
+      const companyChange = previousPlan && (groupOrChild(text) || mobility.test(text) || stairs || previousCompany && /歳|才|人|雨|分|歩|今日|明日/.test(text));
+      const makePlan = atInuyama && !otherArea && (arranging || planUpdate || companyChange || accessibilityQuestion || previousPlan && solo || !previousCompany && (key==='castle' || prior.examplePlace==='inuyama') && (midday.test(text)||teaBreak.test(text)));
+      if (makePlan && !exclusions(text) && !foreignEndpoint(text,fromParticle,outingOrigin)) {
+        const hasCompany = !solo && (previousCompany || groupOrChild(text) || mobility.test(text) || stairs==='avoid');
+        const party = hasCompany ? companyTurn(text,previousCompany,'castle') : null;
+        const company = party?.company;
+        const selected = previousPlan || (same && key==='castle'?{admission:'yes',roundTrip:true,ticket:true}:null);
+        const update = dayPlan(text,selected,company,state.hold==='townOnly'?'no':'undecided');
+        const partyReply = companyChange && party && !accessibilityQuestion && !(update.plan.preventTowerStairs && (stairs==='avoid' || planUpdate));
+        return answer('outing/inuyama-plan',partyReply?party.reply:update.reply,{inuyamaPlan:update.plan,place:'inuyama',...(company?{company}:{})},partyReply?party.change:update.change);
+      }
+      if (!solo && (previousCompany || groupOrChild(text) || mobility.test(text) || stairs==='avoid')) {
         const update = companyTurn(text,previousCompany,key);
         const c = update.company;
         const hold = c.access ? (c.walkMinutes !== null ? 'accessKnown' : 'access') : (c.age !== null || c.grade || c.people ? 'personKnown' : 'person');
@@ -297,13 +417,17 @@ window.CentxConversation = (() => {
       if (park < 0 || tower < 0 || srt < 0)
         return confirm('今回のご希望から外れた候補を取り下げました。次にしたいことを選んでください。');
       if (/半日|午後|空き時間|観光|おでかけ|どこか/.test(text))
-        return answer('outing','名古屋から半日で訪れるなら、犬山や栄、長久手から興味のある場所を選べます。');
+        return answer('outing','名古屋から半日で出かける一例として、犬山で過ごす午後を組みました。立ち寄る順番や行き先を変更できます。');
       return null;
     }
 
     if (scene === 'airport') {
-      const seat = preference(text,/座席|指定席|ミューチケット|特別車/);
-      const previousOrigin = same && ['sakae','kanayama','nagoya'].includes(key) ? key : state.lastOrigin || '';
+      const seat = preference(text,/座席|指定席|ミューチケット|特別車|席を(?:取|と|確保)|席の予約/);
+      const ordinary = /一般車|普通車|自由席|指定(?:しない|なし|しなくて|は不要)|指定席(?:は|を|が)?(?:いらな|要らな|やめ|不要)|(?:席(?:の|は)?|座席は)?予約(?:は|を)?(?:不要|やめ|しな(?:い|く))/.test(text) && preference(text,/一般車|普通車|自由席/) >= 0;
+      const reserve = !ordinary && (seat > 0 || /(?:バス|席)(?:の|は|を|って)?予約(?:したい|できる|できますか)|席(?:は|を|が|って)?(?:とりたい|とって|取って|予約|確保)|座っ(?:て行|てい)きたい|座りたい/.test(text)) && seat >= 0;
+      const previousOrigin = same && ['sakae','kanayama','nagoya'].includes(key) ? key : key==='seat-options' ? prior.lastOrigin || 'sakae' : state.lastOrigin || '';
+      const inComparison = same && key==='seat-options';
+      const prepare = /乗る前|乗車前|用意|準備|必要な(?:もの|物|券|きっぷ)|何(?:が|を)(?:要る|買|持)|持ち物|買い方|チェックリスト|まとめて/.test(text);
       const rail = preference(text,/電車|鉄道|名鉄線|ミュースカイ/);
       const bus = preference(text,/バス/);
       const origins = [
@@ -313,7 +437,9 @@ window.CentxConversation = (() => {
       const departure = origins.filter(([,status]) => status > 0);
       if (groupOrChild(text) || state.hold === 'person' && !/大人(?:1人|ひとり|だけ)|1人で|ひとりで/.test(text))
         return confirm('利用する方の年齢や人数で空港までの運賃が変わります。ここでは大人1人の例を案内しています。','person');
-      const origin = departure.length === 1 ? departure[0][0] : previousOrigin;
+      let origin = departure.length === 1 ? departure[0][0] : previousOrigin;
+      if (!origin && !key && prior.exampleOrigin==='sakae' && reserve) origin='sakae';
+      if (bus > 0 && !departure.length && (inComparison || prior.busOrigin==='sakae') && /戻|やっぱり|にする|で行|に変|がいい/.test(text)) origin='sakae';
       if (preference(text,/中部国際空港|セントレア|空港/) < 0 || !departure.length && origins.some(([,status])=>status < 0))
         return confirm('出発地または行き先が変わるのですね。どこからどこへ向かうご予定ですか。','place');
       if (/何時|[0-9]+時|最終|終電|始発|発車時刻|発車時間|遅延|遅れ|時刻表|間に合/.test(text) || state.hold === 'schedule' && !/きっぷ|切符|運賃|料金|値段/.test(text)) {
@@ -322,20 +448,29 @@ window.CentxConversation = (() => {
         const carrier = /飛行機|フライト|便/.test(text) || time ? (time?time+'の便の':'ご利用便の')+'出発・搭乗手続き時刻は航空会社で、' : '';
         return confirm(carrier+(from || '中部国際空港への列車・バス')+'の時刻は交通各社の公式時刻表でご確認ください。','schedule',{lastOrigin:origin,destination:'centrair',flightTime:time});
       }
-      if (exclusions(text) || privateTransport.test(text) || ticketException.test(text) || /(空港|セントレア)(?:駅)?(?:発|から)|往復|予約(?:を|し|済)|満席|[0-9]+円/.test(text) || hasPass(text)
+      if (exclusions(text) || privateTransport.test(text) || ticketException.test(text) || /(空港|セントレア)(?:駅)?(?:発|から)|往復|予約済|満席|[0-9]+円/.test(text) || /予約(?:を|し)/.test(text) && !reserve && !ordinary || hasPass(text)
         || /今日(?:の午後|中)|今日はおでかけせず|空港に(?:は)?行かない/.test(text))
         return confirm('空港へ向かう方向、出発地、ご希望の時間や交通手段を確認させてください。','conditions');
-      if (departure.length > 1 || foreignEndpoint(text,fromParticle,airportOrigin) || foreignEndpoint(text,toParticle,airportDestination))
+      const stationsText = text.replace(/(?:バス|電車|一般車|普通車|特別車)(?:に|へ)(?:戻|変更)|(?:から|発)に変更/g,'');
+      if (departure.length > 1 || foreignEndpoint(stationsText,fromParticle,airportOrigin) || foreignEndpoint(stationsText,toParticle,airportDestination))
         return confirm('どの駅・停留所からセントレアへ向かいますか。伏見・栄のバス、金山・名鉄名古屋の電車が候補です。','place');
       if (!origin) {
-        if (airportWords.test(text) || rail || bus || baggage.test(text)) return answer('airport','セントレアへ向かう出発地はどちらですか。栄・伏見、金山、名鉄名古屋の例から選べます。');
+        if (airportWords.test(text) || rail || bus || reserve || prepare || baggage.test(text)) return answer('airport','出発地の一例として、栄・伏見からセントレアへ直通する空港バスを表示しています。実際の出発駅に合わせて変更できます。');
         return null;
       }
+      if (origin==='sakae' && reserve && bus >= 0 && rail >= 0)
+        return answer('airport/seat-options','伏見・栄の空港バスは予約できません。座席を決めておきたい場合は、名鉄名古屋などから空港行きの特別車に乗る方法があります。',{lastOrigin:'sakae',busOrigin:'sakae',seatClass:'reserved'},'バスと指定席のある電車を比較');
       if (origin === 'sakae' && (rail > 0 || bus < 0 || seat > 0) || origin !== 'sakae' && (bus > 0 || rail < 0))
         return confirm('ご希望の出発地と交通手段の組み合わせを確認しましょう。栄・伏見発はバス、金山・名鉄名古屋発は電車をご案内できます。','transport',{lastOrigin:origin});
-      if (origin !== 'sakae' && seat > 0)
-        return answer('airport/'+origin+'/seat','座席を指定する場合は、空港までの乗車券に加えて特別車両券（ミューチケット）が必要です。');
-      if (!departure.length && !rail && !bus && !seat && !baggage.test(text) && !/乗り換え|乗換/.test(text)) return null;
+      if (origin!=='sakae' && (prepare || detail==='ready' && (ordinary || seat || departure.length))) {
+        const station = origin==='nagoya'?'名鉄名古屋':'金山';
+        const reserved = !ordinary && seat >= 0 && (reserve || inComparison || detail==='seat' || prior.seatClass==='reserved');
+        const reply = reserved ? station+'では、空港までの乗車券と、利用列車の特別車両券（ミューチケット、450円）を乗車前に用意します。' : station+'から一般車を利用するなら、空港までの乗車券を用意します。一般車がある列車と発車時刻を確認してください。';
+        return answer('airport/'+origin+'/ready',reply,{lastOrigin:origin,seatClass:reserved?'reserved':'general',busOrigin:prior.busOrigin || ''},reserved?'乗車券と指定席の準備':'一般車での乗車準備');
+      }
+      if (origin !== 'sakae' && (reserve || inComparison && departure.length && !ordinary && seat>=0))
+        return answer('airport/'+origin+'/seat','座席を指定する場合は、空港までの乗車券に加えて特別車両券（ミューチケット）が必要です。',{lastOrigin:origin,seatClass:'reserved',busOrigin:prior.busOrigin || ''});
+      if (!departure.length && !rail && !bus && !seat && !ordinary && !baggage.test(text) && !/乗り換え|乗換/.test(text)) return null;
       if ((state.hold === 'conditions' || state.hold === 'place') && !departure.length)
         return confirm('出発地から区間を選び直しましょう。栄・伏見、金山、名鉄名古屋のどこから空港へ向かいますか。',state.hold);
       if (origin === 'sakae') {
@@ -349,7 +484,14 @@ window.CentxConversation = (() => {
 
     const workScreen = same && key === 'work';
     const schoolScreen = same && key === 'school';
+    if (schoolScreen && /期限|有効期間|往復(?:増|減)|あと[0-9]+回|もう[0-9]+日/.test(text) && !/研修|出社|勤務/.test(text))
+      return confirm('通学定期の有効期間は券面で確認できます。学校へ通う路線や学齢に合わせてご案内します。','school');
     const schoolRequest = /学校|通学|らんらんバス|高校[にへ]|小学生が(?:通|乗)/.test(text) || schoolScreen && /高校生|小学生|名鉄(?:の)?電車|鉄道|バス/.test(text);
+    const trainSchool = schoolScreen && detail==='train' && !/バス|らんらん|区間|小学生|大学|中学生/.test(text);
+    if (trainSchool && /受け取|受取|受けと|どこで(?:買|購入|発券)|審査(?:が|の)?(?:済|後|終わ)/.test(text))
+      return answer('commute/school/train','審査が済んだら、駅の対応券売機などで通学定期を購入します。利用できる券売機と購入方法は名鉄の専用サービスで確認できます。',{schoolStep:'collect'},'審査後の購入場所');
+    if (trainSchool && /申込|手続き|用意|準備|必要/.test(text))
+      return answer('commute/school/train','新規の通学定期は、専用サービスで学校の証明書類を提出し、審査が済んだら駅の対応券売機などで購入します。',{schoolStep:'prepare'},'通学定期の申込み');
     if (schoolRequest && !/研修|通勤|子供料金|子ども料金|こども料金/.test(text)) {
       if (exclusions(text) || /大学|中学校|中学生|JR|地下鉄|スクールバス|他社/i.test(text))
         return confirm('どの路線を使い、何年生の方が通いますか。対象の路線と学齢を確認しましょう。');
@@ -368,13 +510,16 @@ window.CentxConversation = (() => {
       return answer('commute/school','通学する方の学齢と、通学に使う鉄道・バスを選んでください。');
     }
 
-    const savedCount = workScreen && /^[1-5]$/.test(detail) ? Number(detail) : state.lastWorkCount || 0;
+    const displayedExample = same && !key && Number.isInteger(prior.exampleCount) && prior.exampleCount>=1 && prior.exampleCount<=5 ? prior.exampleCount : 0;
+    const savedCount = workScreen && /^[1-5]$/.test(detail) ? Number(detail) : state.lastWorkCount || displayedExample;
+    if (savedCount && state.hold==='expiry' && /^[0-9]+(?:回|往復)(?:だけ|です|になります|の予定|かな|くらい|、|$)/.test(text)) text = '期限後は'+text;
+    const deadlineWords = /(?:有効|利用)(?:開始)?期限|有効期間|期限(?:内|外|後|前|切れ|の|を|が)|期間(?:内|外|後|が過ぎ)|60日(?:を|が)?(?:過ぎ|越え|超え)|61日目/;
     const countMention = /([0-9]+)(?:回の?)?往復|([0-9]+)(?:回|日)(?:分)?(?:に|は|で|を|だけ|くらい|ほど|の予定|行く|通う|通い|[、]|$)/g;
     const amounts = [...text.matchAll(countMention)];
     const absolute = amounts.length ? Number(amounts.at(-1)[1] || amounts.at(-1)[2]) : null;
     const relativeCount = text.match(/(?:もう|あと|さらに|更に|追加で|プラス|マイナス)([0-9]+)(?:往復|回|日)|([0-9]+)(?:往復|回|日)(?:分|だけ|ほど|くらい)?(?:を)?(?:増|減|足|少なく|多く|追加|多い|少ない|やめ)/);
     const increaseOrDecrease = /増|減|プラス|マイナス|追加|足す|少なく|多く|もう(?:一|[0-9])|あと[0-9]/.test(text);
-    const isWork = workScreen || workTrip.test(text) || absolute !== null || relativeCount || increaseOrDecrease || /一宮|定期|料金|運賃/.test(text) || same && key === 'confirm';
+    const isWork = workScreen || workTrip.test(text) || absolute !== null || relativeCount || increaseOrDecrease || deadlineWords.test(text) || /一宮|定期|料金|運賃/.test(text) || same && key === 'confirm';
     if (!isWork) return null;
     if (groupOrChild(text) || state.hold === 'person' && !/大人(?:1人|ひとり|だけ)|1人で|ひとりで/.test(text))
       return confirm('この運賃比較は大人1人の場合です。お子さまの運賃や複数人の条件を含む場合は購入条件を確認しましょう。','person');
@@ -383,19 +528,65 @@ window.CentxConversation = (() => {
     const source = /一宮/.test(text);
     const target = /名古屋|名駅/.test(text);
     const reversed = /(?:名古屋(?:駅)?|名駅)(?:から|発)|一宮(?:駅)?(?:まで|着|[へに](?:通|行く|変更|$))/.test(text);
-    const otherPlace = foreignEndpoint(text,fromParticle,workOrigin) || foreignEndpoint(text,toParticle,/(?:名鉄)?名古屋(?:駅)?$|名駅$/);
+    const stationsText = text.replace(/期限(?:を|が)?(?:過ぎて|切れて)から|期限まで|期間まで|[0-9]+(?:往復|回)目から|(?:元の回数|元|[0-9]+(?:往復|回))に戻/g,'');
+    const otherPlace = foreignEndpoint(stationsText,fromParticle,workOrigin) || foreignEndpoint(stationsText,toParticle,/(?:名鉄)?名古屋(?:駅)?$|名駅$/);
     const separator = /(?:駅|[一-龯])(?:[―−–—⇄→-])(?:名鉄|[一-龯])/.test(text);
     if (exclusions(text) || reversed || otherPlace || preference(text,/一宮/) < 0 || preference(text,/名古屋|名駅/) < 0 || /(?:栄|伏見|金山|犬山|藤が丘)/.test(text) || separator && !(source && target)
       || state.hold === 'place' && !(source && target))
       return confirm('比較できるのは名鉄一宮から名鉄名古屋へ通う場合です。出発駅と到着駅をもう一度ご指定ください。','place');
+    if (deadlineWords.test(text) && !/片道|支払済|購入済|買ってある|もう買った|払戻|払い戻|返金|手数料/.test(text) && !hasPass(text) && !ticketException.test(text) && !privateTransport.test(text)) {
+      const late = /期限(?:の|より|を|が|から)?(?:あ?と|あと|後|外|切れ|過ぎ|越|超)|期限切れ|有効期間(?:の|より|を|が)?(?:あと|後|外|過ぎ|越|超)|期間外|60日(?:を|が)?(?:過ぎ|超え|越え)|61日目/.test(text);
+      const inside = /期限(?:より|の)?前|期限内|期間内|60日以内/.test(text);
+      const allInside = inside && /すべて|全て|全部|全回|みんな|ことごとく/.test(text);
+      const returnSome = text.match(/(?:のうち|の内|最後の?|ラストの?|うち)?(\d+)(?:回|往復)(?:分)?(?:だけ|も|を|は|が|とも|分|だけは)*(?:有効)?(?:期限内|期間内|期限(?:より|の)?前|60日以内)/);
+      const finalInside = inside && /最後(?:の往復|だけ|も|は|が)|ラスト(?:だけ|も|は|が)/.test(text);
+      const onTime = allInside || returnSome || finalInside || /期限(?:を|は)?(?:過ぎない|越えない)|期限(?:の)?後(?:では|じゃ)な/.test(text);
+      if (late || onTime) {
+        if (!savedCount || (!workScreen && !displayedExample && !state.trainingScope))
+          return confirm('期限内と期限後の回数を分けて比べます。名鉄一宮から名鉄名古屋までの合計と、そのうち期限後になる往復回数を教えてください。','expiry');
+        const nBefore = text.match(/(?:最後の?|ラストの?|残り(?:の)?|うち(?:の|の最後の)?)?([0-9]+)(?:往復|回)(?:だけ|分|ぶん)?(?:が|は|を|も|だけ|のみ|なら)?(?:有効|利用)?(?:開始)?(?:期限|期間)(?:の|を|より|が)?(?:あ?と|あと|後|外|切れ|過ぎ|越え|超え)/);
+        const nAfter = text.match(/(?:期限|期間)(?:の|より)?(?:あと|後|外|切れ後|が過ぎてから)(?:に|が|は|で|になるのは)?([0-9]+)(?:往復|回)/);
+        const numbered = text.match(/(\d+)(?:回|往復)目(から|以降|だけ|が|は|も)/);
+        let after = null;
+        if (allInside) after=0;
+        else if (returnSome || finalInside) {
+          const moved = returnSome ? Number(returnSome[1]) : 1;
+          const before = text.match(/(?:期限|期間)(?:の)?(?:後|あと|外)(?:に|の|だった|になる)?(\d+)(?:回|往復)(?:のうち|の内)/);
+          const hadOutside = before ? Number(before[1]) : prior.fare?.afterPeriod || 0;
+          if (hadOutside>savedCount || moved>savedCount || before && moved>hadOutside)
+            return confirm('予定は'+savedCount+'往復です。変更後、期限より後に残るのは何往復ですか。','expiry',{lastWorkCount:savedCount,trainingScope:true});
+          after = Math.max(0,hadOutside-moved);
+        }
+        else if (onTime) after = 0;
+        else if (numbered && Number(numbered[1])<=savedCount && Number(numbered[1])>0)
+          after = /から|以降/.test(numbered[2]) ? savedCount-Number(numbered[1])+1 : 1;
+        else if (nBefore || nAfter) after = Number((nBefore || nAfter)[1]);
+        else if (/最後|ラスト/.test(text)) after = 1;
+        if (after===null || after>savedCount)
+          return confirm('予定は合計'+savedCount+'往復です。そのうち、期限の後になるのは何往復ですか。','expiry',{lastWorkCount:savedCount,trainingScope:true});
+        const previousCount = prior.fare?.previousCount || savedCount;
+        const fare = fareCase(savedCount,previousCount,after,after>0?'expiry':previousCount!==savedCount?'delta':'base');
+        const reply = after ? '期限内の'+fare.inPeriod+'往復をセット、期限後の'+after+'往復を普通運賃で乗ると合計'+formatYen(fare.bundleTotal)+'です。すべて普通運賃なら'+formatYen(fare.ordinaryTotal)+'です。' : savedCount+'往復すべてが期限内なら、10枚セットは2,800円、毎回普通運賃なら'+formatYen(fare.ordinaryTotal)+'です。';
+        return answer('commute/work/'+savedCount,reply,{count:savedCount,fare},'期限内'+fare.inPeriod+'往復・期限後'+after+'往復');
+      }
+    }
     const periods = [...text.matchAll(/([0-9]+)(か月|ヶ月|カ月|箇月|週間|日間)/g)];
     if (privateTransport.test(text) || ticketException.test(text) || /片道|年(?:間|を通して)|半年|[3-9]か?月|60日(?:以上|超)|有効期限(?:を|が)過ぎ|別々の人|新幹線|バスで|地下鉄|jr(?:で|線)|回数未定|わからない|分からない|[0-9]+円|毎(?:日|週|月)|週間に|月に|のペース/.test(text)
       || periods.some(([,n,unit]) => Number(n) * (unit === '日間' ? 1 : unit === '週間' ? 7 : 30) > 60))
       return confirm('この比較は約60日以内の同一区間の往復が対象です。期間、区間、回数を確認させてください。','period');
     if (state.hold === 'period' && !/60日以内|約60日|2か月以内|2ヶ月以内|1か月|今月/.test(text))
       return confirm('先ほどの利用期間について、約60日以内に何回往復するかを確認させてください。','period');
-    if (/[0-9]\s*(?:〜|~|から|か|または)[0-9](?:回|往復)|[0-9]往復(?:か|または|〜|~)[0-9]/.test(text))
-      return confirm('往復回数を一つ決めると、普通運賃と10枚セットを比較できます。');
+    const alternatives = text.match(/(\d+)(?:往復|回)?(?:か|または|〜|~|から)(\d+)(?:往復|回)/);
+    if (alternatives) {
+      const lower = Math.min(Number(alternatives[1]),Number(alternatives[2]));
+      const higher = Math.max(Number(alternatives[1]),Number(alternatives[2]));
+      if (savedCount===lower && higher===lower+1 && higher<=5 && !prior.fare?.afterPeriod) {
+        const fare = fareCase(higher,lower,0,'delta');
+        const use = fare.remainingTickets?'残りは'+fare.remainingTickets+'枚です。':'10枚を使い切ります。';
+        return answer('commute/work/'+higher,lower+'往復と'+higher+'往復を比べます。10枚セットはどちらも2,800円で、'+higher+'往復なら'+use,{count:higher,fare},lower+'往復と'+higher+'往復を比較');
+      }
+      return confirm('比べたい回数を一つずつ教えてください。名鉄一宮から名鉄名古屋までの普通運賃と10枚セットを比べます。');
+    }
     if (amounts.length) {
       const last = amounts.at(-1);
       const tail = text.slice(last.index + last[0].length).split('、')[0];
@@ -403,7 +594,9 @@ window.CentxConversation = (() => {
         return confirm('変更後の合計回数を教えてください。実際に往復する回数に合わせて比較します。');
     }
     let count = absolute;
-    if (relativeCount) {
+    const undo = !absolute && prior.fare && /追加(?:分|の予定)?(?:は|を|が)?(?:なし|無し|やめ|取消|取り消)|増(?:えない|やさない)|元(?:の回数)?に戻|増やすの(?:は|を)やめ/.test(text);
+    if (undo) count = prior.fare.previousCount;
+    else if (relativeCount) {
       if (!savedCount) return confirm('増減する前の回数を確認させてください。名鉄一宮から名鉄名古屋まで、全部で何往復しますか。');
       const delta = Number(relativeCount[1] || relativeCount[2]);
       count = savedCount + (/減|少な|マイナス|やめ/.test(text) ? -delta : delta);
@@ -412,13 +605,17 @@ window.CentxConversation = (() => {
     }
     if (count !== null) {
       if (!Number.isInteger(count) || count < 1 || count > 5) return confirm('この比較で試せるのは1〜5往復です。予定の往復回数を確認させてください。');
-      if (!workScreen && !state.trainingScope && !(source && (target || /研修|仕事|通勤/.test(text))))
+      if (!workScreen && !displayedExample && !state.trainingScope && !(source && (target || /研修|仕事|通勤/.test(text))))
         return answer('commute/work','名鉄一宮から名鉄名古屋へ、定期券を持っていない大人1人が通うご予定なら、往復回数を選んでください。');
       const total = count * 2 * 400;
       const difference = Math.abs(total - 2800).toLocaleString('ja-JP');
       const condition = /もし|たら|かも|場合|としたら/.test(text) ? 'なら' : 'では';
       const comparison = count + '往復' + condition + '、' + (total < 2800 ? '毎回普通運賃で乗る方' : '10枚セットの方') + 'が' + difference + '円安くなります。';
-      return answer('commute/work/'+count,comparison,{count},savedCount && savedCount !== count ? savedCount + '往復 → ' + count + '往復' : '名鉄一宮〜名鉄名古屋・' + count + '往復');
+      const changed = savedCount && savedCount !== count;
+      const late = undo ? 0 : Math.min(count,prior.fare?.afterPeriod || 0);
+      const fare = changed ? fareCase(count,savedCount,late,late ? 'expiry' : 'delta') : null;
+      const reply = fare?.afterPeriod ? '期限後の'+fare.afterPeriod+'往復を残して合計'+count+'往復に変更すると、セットと普通運賃の併用は'+formatYen(fare.bundleTotal)+'、すべて普通運賃なら'+formatYen(fare.ordinaryTotal)+'です。' : comparison;
+      return answer('commute/work/'+count,reply,{count,...(fare?{fare}:{})},changed ? savedCount + '往復 → ' + count + '往復' : '名鉄一宮〜名鉄名古屋・' + count + '往復');
     }
     if (workTrip.test(text) || source)
       return answer('commute/work','名鉄一宮から名鉄名古屋まで、約60日以内に何回往復する予定ですか。');
